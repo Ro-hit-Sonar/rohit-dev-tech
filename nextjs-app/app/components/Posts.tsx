@@ -1,34 +1,49 @@
+import type React from "react";
 import Link from "next/link";
 
 import { sanityFetch } from "@/sanity/lib/live";
 import { morePostsQuery, allPostsQuery } from "@/sanity/lib/queries";
-import { Post as PostType } from "@/sanity.types";
+import type { Post as PostType } from "@/sanity.types";
 import DateComponent from "@/app/components/Date";
 import OnBoarding from "@/app/components/Onboarding";
+import CoverImage from "@/app/components/CoverImage";
+import { ArrowRight } from "lucide-react";
 
 const Post = ({ post }: { post: PostType }) => {
-  const { _id, title, slug, excerpt, date } = post;
+  const { _id, title, slug, excerpt, date, coverImage } = post;
 
   return (
     <article
       key={_id}
-      className="flex max-w-xl flex-col items-start justify-between"
+      className="group relative flex flex-col md:flex-row gap-6 rounded-xl border border-gray-200 p-5 shadow-sm transition-all duration-200 hover:shadow-md hover:border-gray-300 bg-white"
     >
-      <div className="text-gray-500 text-sm">
-        <DateComponent dateString={date} />
+      <div className="w-full md:w-1/3 h-48 md:h-auto rounded-lg overflow-hidden flex-shrink-0">
+        <div className="w-full h-full transition-transform duration-300 group-hover:scale-105">
+          <CoverImage image={coverImage} />
+        </div>
       </div>
 
-      <h3 className="mt-3 text-2xl font-semibold">
+      <div className="flex flex-col flex-grow space-y-3">
+        <div className="inline-flex items-center text-gray-500 text-sm font-medium">
+          <span className="inline-block bg-gray-100 px-2.5 py-1 rounded-full">
+            <DateComponent dateString={date} />
+          </span>
+        </div>
+
+        <h3 className="text-2xl font-bold text-gray-900 group-hover:text-red-600 transition-colors">
+          <Link href={`/posts/${slug}`}>{title}</Link>
+        </h3>
+
+        <p className="text-gray-600 line-clamp-3">{excerpt}</p>
+
         <Link
-          className="hover:text-red-500 underline transition-colors"
           href={`/posts/${slug}`}
+          className="mt-auto pt-3 flex items-center text-sm font-medium text-red-600 group-hover:translate-x-1 transition-transform"
         >
-          {title}
+          <span>Read article</span>
+          <ArrowRight className="ml-1 h-4 w-4" />
         </Link>
-      </h3>
-      <p className="mt-5 line-clamp-3 text-sm leading-6 text-gray-600">
-        {excerpt}
-      </p>
+      </div>
     </article>
   );
 };
@@ -42,7 +57,7 @@ const Posts = ({
   heading?: string;
   subHeading?: string;
 }) => (
-  <div>
+  <div className="py-8">
     {heading && (
       <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl lg:text-5xl">
         {heading}
@@ -51,7 +66,7 @@ const Posts = ({
     {subHeading && (
       <p className="mt-2 text-lg leading-8 text-gray-600">{subHeading}</p>
     )}
-    <div className="mt-6 pt-6 space-y-12 border-t border-gray-200">
+    <div className="mt-8 pt-6 space-y-8 border-t border-gray-200">
       {children}
     </div>
   </div>
