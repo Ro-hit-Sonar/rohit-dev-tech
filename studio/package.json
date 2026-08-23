@@ -10,22 +10,22 @@
     "prebuild": "npm run extract-types",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "extract-types": "sanity schema extract --enforce-required-fields"
+    "extract-types": "sanity schema extract --enforce-required-fields --force"
   },
   "keywords": [
     "sanity"
   ],
   "dependencies": {
-    "@sanity/assist": "^3.2.0",
-    "@sanity/icons": "^3.5.0",
-    "@sanity/vision": "^5.31.2",
+    "@sanity/assist": "^6.1.21",
+    "@sanity/icons": "^5.2.1",
+    "@sanity/vision": "^6.10.1",
     "date-fns": "^3.6.0",
     "pluralize-esm": "^9.0.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "rxjs": "^7.8.1",
-    "sanity": "^5.31.2",
-    "sanity-plugin-asset-source-unsplash": "^3.0.1",
+    "sanity": "^6.10.1",
+    "sanity-plugin-asset-source-unsplash": "^7.0.25",
     "styled-components": "^6.1.15"
   },
   "devDependencies": {

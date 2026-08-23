@@ -1,5 +1,5 @@
 import {defineField, defineType} from 'sanity'
-import {BulbOutlineIcon} from '@sanity/icons'
+import {BulbOutlineIcon} from '@sanity/icons/BulbOutline'
 
 /**
  * Call to action schema object.  Objects are reusable schema structures document.
