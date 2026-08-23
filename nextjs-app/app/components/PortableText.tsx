@@ -12,7 +12,7 @@ import {
   PortableText,
   type PortableTextComponents,
   type PortableTextBlock,
-} from "next-sanity";
+} from "@portabletext/react";
 
 import ResolvedLink from "@/app/components/ResolvedLink";
 

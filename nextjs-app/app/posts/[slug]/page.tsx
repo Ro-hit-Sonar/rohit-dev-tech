@@ -1,6 +1,6 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import { notFound } from "next/navigation";
-import { type PortableTextBlock } from "next-sanity";
+import { type PortableTextBlock } from "@portabletext/react";
 import { Suspense } from "react";
 
 import Avatar from "@/app/components/Avatar";

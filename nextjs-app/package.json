@@ -7,12 +7,12 @@
     "prebuild": "npm run typegen",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typegen": "sanity typegen generate"
   },
   "dependencies": {
     "@portabletext/react": "^8.0.1",
-    "@sanity/client": "^8.2.0",
+    "@sanity/client": "^7.26.2",
     "@sanity/image-url": "^2.1.1",
     "@sanity/uuid": "^3.0.2",
     "@tailwindcss/typography": "^0.5.16",
@@ -32,7 +32,7 @@
     "@types/node": "^20.17.17",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.4",
-    "eslint": "^10.9.0",
+    "eslint": "^9.39.5",
     "eslint-config-next": "^16.3.2",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.15",
