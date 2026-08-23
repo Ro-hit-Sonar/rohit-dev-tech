@@ -18,19 +18,19 @@
   "dependencies": {
     "@sanity/assist": "^3.2.0",
     "@sanity/icons": "^3.5.0",
-    "@sanity/vision": "^4.22.1",
+    "@sanity/vision": "^5.31.2",
     "date-fns": "^3.6.0",
     "pluralize-esm": "^9.0.5",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "rxjs": "^7.8.1",
-    "sanity": "^4.22.1",
+    "sanity": "^5.31.2",
     "sanity-plugin-asset-source-unsplash": "^3.0.1",
     "styled-components": "^6.1.15"
   },
   "devDependencies": {
     "@sanity/eslint-config-studio": "^4.0.0",
-    "@types/react": "^18.3.12",
+    "@types/react": "^19.2.18",
     "eslint": "^8.6.0",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3"
