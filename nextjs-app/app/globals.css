@@ -1,14 +1,331 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-/* Animation delays for hero section */
-.animation-delay-2000 {
-  animation-delay: 2s;
+/* Registered so it can be animated. An unregistered custom property is a string
+ * to the engine and will not interpolate — the arc would snap, not close. */
+@property --arc-close {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 1;
 }
 
-.animation-delay-4000 {
-  animation-delay: 4s;
+@plugin "@tailwindcss/typography";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ---------------------------------------------------------------------------
+ * Semantic tokens.
+ * The neutral ramp comes from the circle design; --brand-* carries the
+ * Rohitdev.tech red so that --primary can stay neutral (the footer slab and
+ * the hero rings both read as near-black / near-white, not red).
+ * ------------------------------------------------------------------------ */
+:root {
+  --background: oklch(0.97 0 0);
+  --foreground: oklch(0.15 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0 0);
+  --primary: oklch(0.15 0 0);
+  --primary-foreground: oklch(0.98 0 0);
+  --secondary: oklch(0.92 0 0);
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted: oklch(0.92 0 0);
+  --muted-foreground: oklch(0.5 0 0);
+  --accent: oklch(0.88 0 0);
+  --accent-foreground: oklch(0.15 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.85 0 0);
+  --input: oklch(0.92 0 0);
+  --ring: oklch(0.5 0 0);
+  --radius: 0.625rem;
+
+  /* Brand accent — red-600 / red-500 from the original palette */
+  --brand: #cc2819;
+  --brand-foreground: #fff;
+
+  /* Hatching colour for the hero's concentric rings */
+  --ring-hatch: oklch(0 0 0 / 0.08);
+  --ring-hatch-soft: oklch(0 0 0 / 0.06);
+
+  /* The footer is a dark slab in BOTH themes. Using --primary here would flip
+     it to near-white in dark mode, which lands as a glare at the end of an
+     otherwise dark page. */
+  --footer: oklch(0.15 0 0);
+  --footer-foreground: oklch(0.98 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.185 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.185 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.32 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.637 0.237 25.331);
+  --destructive-foreground: oklch(0.205 0 0);
+  --border: oklch(0.269 0 0);
+  --input: oklch(0.269 0 0);
+  --ring: oklch(0.439 0 0);
+
+  --brand: #f77769;
+  --brand-foreground: #1e1011;
+
+  --ring-hatch: oklch(1 0 0 / 0.1);
+  --ring-hatch-soft: oklch(1 0 0 / 0.07);
+
+  --footer: oklch(0.11 0 0);
+  --footer-foreground: oklch(0.92 0 0);
+}
+
+@theme inline {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+
+  --color-footer: var(--footer);
+  --color-footer-foreground: var(--footer-foreground);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-layer: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
+
+  /* The open-arc graphic. Slow enough to read as drift rather than spin; the
+     alternating directions keep the gaps from ever lining up. */
+  --animate-drift: drift 54s linear infinite;
+  --animate-drift-reverse: drift-reverse 72s linear infinite;
+  --animate-drift-slow: drift 96s linear infinite;
+
+  @keyframes drift {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @keyframes drift-reverse {
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * The original numeric ramps, carried forward from the Tailwind v3 config so
+ * existing `red-600` / `gray-200` call sites keep resolving while the site
+ * migrates to the semantic tokens above.
+ * ------------------------------------------------------------------------ */
+@theme {
+  --color-black: #0d0e12;
+  --color-white: #fff;
+
+  --color-cyan-50: #e7fefe;
+  --color-cyan-100: #c5fcfc;
+  --color-cyan-200: #96f8f8;
+  --color-cyan-300: #62efef;
+  --color-cyan-400: #18e2e2;
+  --color-cyan-500: #04b8be;
+  --color-cyan-600: #037782;
+  --color-cyan-700: #024950;
+  --color-cyan-800: #042f34;
+  --color-cyan-900: #072227;
+  --color-cyan-950: #0d181c;
+
+  --color-gray-50: #f6f6f8;
+  --color-gray-100: #eeeef1;
+  --color-gray-200: #e3e4e8;
+  --color-gray-300: #bbbdc9;
+  --color-gray-400: #9499ad;
+  --color-gray-500: #727892;
+  --color-gray-600: #515870;
+  --color-gray-700: #383d51;
+  --color-gray-800: #252837;
+  --color-gray-900: #1b1d27;
+  --color-gray-950: #13141b;
+
+  --color-red-50: #fff6f5;
+  --color-red-100: #ffe7e5;
+  --color-red-200: #ffdedc;
+  --color-red-300: #fdada5;
+  --color-red-400: #f77769;
+  --color-red-500: #ef4434;
+  --color-red-600: #cc2819;
+  --color-red-700: #8b2018;
+  --color-red-800: #4d1714;
+  --color-red-900: #321615;
+  --color-red-950: #1e1011;
+
+  --color-orange-50: #fcf1e8;
+  --color-orange-100: #f9e3d2;
+  --color-orange-200: #f4c7a6;
+  --color-orange-300: #efab7a;
+  --color-orange-400: #ea8f4e;
+  --color-orange-500: #e57322;
+  --color-orange-600: #ba5f1e;
+  --color-orange-700: #8f4b1b;
+  --color-orange-800: #653818;
+  --color-orange-900: #3a2415;
+  --color-orange-950: #251a13;
+
+  --color-yellow-50: #fefae1;
+  --color-yellow-100: #fcf3bb;
+  --color-yellow-200: #f9e994;
+  --color-yellow-300: #f7d455;
+  --color-yellow-400: #f9bc15;
+  --color-yellow-500: #d28a04;
+  --color-yellow-600: #965908;
+  --color-yellow-700: #653a0b;
+  --color-yellow-800: #3b220c;
+  --color-yellow-900: #271a11;
+  --color-yellow-950: #181410;
+
+  --color-green-50: #e7f9ed;
+  --color-green-100: #d0f4dc;
+  --color-green-200: #a1eaba;
+  --color-green-300: #72e097;
+  --color-green-400: #43d675;
+  --color-green-500: #3ab564;
+  --color-green-600: #329454;
+  --color-green-700: #297343;
+  --color-green-800: #215233;
+  --color-green-900: #183122;
+  --color-green-950: #14211a;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    @apply border-border;
+  }
+
+  /* SVG groups rotate around the viewBox origin by default, which sends them
+     orbiting instead of spinning in place. `view-box` pins the origin to the
+     centre of the viewBox — `fill-box` would use each group's own bounding box,
+     so a group holding an off-centre marker would wobble instead of spin. */
+  .spin-in-place {
+    transform-box: view-box;
+    transform-origin: center;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Scroll-scored reveals.
+ *
+ * These are CSS scroll-driven animations, not JavaScript. That ordering matters
+ * for accessibility: the rules below are the ONLY place the "not yet revealed"
+ * state exists, and they only apply where `animation-timeline` is supported and
+ * the reader has not asked for reduced motion. Everywhere else the element just
+ * renders in its finished state — lit, in place, readable. There is no moment
+ * at which content is hidden and waiting for a script to un-hide it.
+ * ------------------------------------------------------------------------ */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* A line of the display statement: rises and brightens as it enters. */
+    .scroll-line {
+      animation: scroll-line-in linear both;
+      animation-timeline: view();
+      animation-range: entry 10% cover 32%;
+    }
+
+    /* Supporting prose: the same move, smaller. */
+    .scroll-rise {
+      animation: scroll-rise-in linear both;
+      animation-timeline: view();
+      animation-range: entry 15% cover 38%;
+    }
+
+    /* The arc closes as the reader moves through the SECTION, so the timeline is
+     * named on the section and referenced from the arc. Using a bare `view()` on
+     * the arc itself would measure the arc's own pass through the viewport — and
+     * since it is nearly viewport-height, that range never finishes while the
+     * section is still being read. */
+    .scroll-arc-scope {
+      view-timeline-name: --arc-scope;
+    }
+
+    .scroll-arc {
+      animation: scroll-arc-close linear both;
+      animation-timeline: --arc-scope;
+      animation-range: entry 85% exit 15%;
+    }
+  }
+}
+
+/* Each line carries its own resting opacity so the statement brightens toward
+ * its final line. The keyframe has to land on that value rather than a flat 1,
+ * or `animation-fill-mode: both` would overwrite the gradient it is meant to
+ * arrive at. */
+.scroll-line {
+  opacity: var(--line-opacity, 1);
+}
+
+@keyframes scroll-line-in {
+  from {
+    opacity: calc(var(--line-opacity, 1) * 0.14);
+    transform: translateY(0.4em);
+  }
+  to {
+    opacity: var(--line-opacity, 1);
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scroll-arc-close {
+  from {
+    --arc-close: 0;
+  }
+  to {
+    --arc-close: 1;
+  }
 }
 
 /* Custom scrollbar for search results */
@@ -17,15 +334,15 @@
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: var(--muted);
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: var(--border);
   border-radius: 3px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: var(--muted-foreground);
 }

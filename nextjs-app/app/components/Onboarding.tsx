@@ -44,7 +44,7 @@ const OnboardingMessage = ({
       <div>
         {!isPresentation ? (
           <Link
-            className="inline-flex rounded-full gap-2 items-center bg-white text-red-500 hover:bg-red-100 focus:bg-red-200 py-3 px-6 transition-colors duration-200"
+            className="inline-flex rounded-full gap-2 items-center bg-white text-red-600 hover:bg-red-100 focus:bg-red-200 py-3 px-6 transition-colors duration-200"
             href={link.href}
             target="_blank"
           >
@@ -62,7 +62,7 @@ const OnboardingMessage = ({
           </Link>
         ) : (
           <button
-            className="cursor-pointer inline-flex rounded-full gap-2 items-center bg-white text-red-500 hover:bg-red-100 focus:bg-red-200 py-3 px-6 transition-colors duration-200"
+            className="cursor-pointer inline-flex rounded-full gap-2 items-center bg-white text-red-600 hover:bg-red-100 focus:bg-red-200 py-3 px-6 transition-colors duration-200"
             data-sanity={createDataAttribute({
               id: uuid(),
               type,
@@ -91,7 +91,7 @@ export default function Onboarding() {
   return (
     <div className="max-w-2xl mx-auto grid grid-flow-row gap-6 py-12 text-center bg-red-500 text-white rounded-lg p-8">
       <svg
-        className="mx-auto h-10 w-10 text-gray-400"
+        className="mx-auto h-10 w-10 text-muted-foreground"
         aria-hidden="true"
         width="512"
         height="512"
@@ -135,7 +135,7 @@ export function PageOnboarding() {
   return (
     <div className="max-w-2xl mx-auto grid grid-flow-row gap-6 py-12 text-center bg-red-500 text-white rounded-lg p-8">
       <svg
-        className="mx-auto h-10 w-10 text-gray-400"
+        className="mx-auto h-10 w-10 text-muted-foreground"
         aria-hidden="true"
         width="512"
         height="512"

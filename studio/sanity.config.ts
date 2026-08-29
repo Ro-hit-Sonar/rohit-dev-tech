@@ -80,6 +80,11 @@ export default defineConfig({
             message: 'This document is used on all pages',
             tone: 'positive',
           }),
+          homePage: defineLocations({
+            locations: [homeLocation],
+            message: 'This document is used on the home page',
+            tone: 'positive',
+          }),
           page: defineLocations({
             select: {
               name: 'name',

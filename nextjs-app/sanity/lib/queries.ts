@@ -53,6 +53,48 @@ export const getPageQuery = defineQuery(`
   }
 `);
 
+const revealReference = /* groq */ `
+  _type == "reveal" => {
+    "slug": post->slug.current,
+    "title": post->title,
+    "coverImage": post->coverImage
+  }
+`;
+
+export const homePageQuery = defineQuery(`
+  *[_type == "homePage"][0]{
+    _id,
+    _type,
+    figuringOut{
+      heading,
+      leadLines,
+      body[]{
+        ...,
+        markDefs[]{
+          ...,
+          ${linkReference}
+        }
+      }
+    },
+    maintenant{
+      heading,
+      stem,
+      items[]{
+        _key,
+        word,
+        body[]{
+          ...,
+          markDefs[]{
+            ...,
+            ${linkReference},
+            ${revealReference}
+          }
+        }
+      }
+    },
+  }
+`);
+
 export const sitemapData = defineQuery(`
   *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {
     "slug": slug.current,

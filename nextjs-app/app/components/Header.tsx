@@ -1,69 +1,62 @@
 import Link from "next/link";
-import { BookOpen, Github, Linkedin } from "lucide-react";
+import { Github, Linkedin } from "lucide-react";
+
+import ThemeToggle from "@/app/components/ThemeToggle";
+
+const navLinks = [
+  { href: "/about", label: "About" },
+  { href: "/posts", label: "Posts" },
+];
 
 export default function Header() {
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-20 bg-white/90 backdrop-blur-lg border-b border-gray-200/50 shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full">
-        <div className="flex items-center justify-between h-full">
-          {/* Logo */}
-          <Link className="flex items-center gap-3 group" href="/">
-            <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center group-hover:bg-red-700 transition-colors">
-              <BookOpen className="w-5 h-5 text-white" />
-            </div>
-            <span className="hidden lg:block text-xl font-bold text-gray-900 group-hover:text-red-600 transition-colors">
-              Rohitdev.tech
-            </span>
-          </Link>
+    <header className="fixed inset-x-0 top-0 z-50 h-20 border-b border-border bg-background/80 backdrop-blur-lg">
+      <div className="mx-auto flex h-full w-full max-w-6xl items-center justify-between px-6">
+        <Link
+          href="/"
+          className="shrink-0 text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors hover:text-brand sm:text-sm"
+        >
+          Rohitdev
+          {/* The suffix is the first thing to go when the bar gets tight. */}
+          <span className="hidden text-muted-foreground sm:inline">.tech</span>
+        </Link>
 
-          {/* Navigation */}
-          <nav className="flex items-center gap-6">
-            <ul className="flex items-center gap-6">
-              <li>
+        <nav className="flex items-center gap-4 sm:gap-8">
+          <ul className="flex items-center gap-4 text-sm sm:gap-8">
+            {navLinks.map(({ href, label }) => (
+              <li key={href}>
                 <Link
-                  href="/about"
-                  className="relative text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 group"
+                  href={href}
+                  className="text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  About
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 group-hover:w-full transition-all duration-300"></span>
+                  {label}
                 </Link>
               </li>
+            ))}
+          </ul>
 
-              <li>
-                <Link
-                  href="/posts"
-                  className="relative text-gray-700 hover:text-red-600 font-medium transition-colors duration-200 group"
-                >
-                  Posts
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-red-600 group-hover:w-full transition-all duration-300"></span>
-                </Link>
-              </li>
-            </ul>
-
-            {/* Social Links */}
-            <div className="flex items-center gap-3 ml-6 pl-6 border-l border-gray-200">
-              <Link
-                href="https://github.com/Ro-hit-Sonar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 transition-all duration-200 hover:scale-110"
-                aria-label="GitHub"
-              >
-                <Github className="w-5 h-5" />
-              </Link>
-
-              <Link
-                href="https://www.linkedin.com/in/rohitsonar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group p-2 rounded-lg bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600 transition-all duration-200 hover:scale-110"
-                aria-label="LinkedIn"
-              >
-                <Linkedin className="w-5 h-5" />
-              </Link>
-            </div>
-          </nav>
-        </div>
+          <div className="flex items-center gap-2 border-l border-border pl-4 sm:gap-3 sm:pl-8">
+            <Link
+              href="https://github.com/Ro-hit-Sonar"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+            >
+              <Github className="h-4 w-4" />
+            </Link>
+            <Link
+              href="https://www.linkedin.com/in/rohitsonar"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="hidden h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground sm:grid"
+            >
+              <Linkedin className="h-4 w-4" />
+            </Link>
+            <ThemeToggle />
+          </div>
+        </nav>
       </div>
     </header>
   );

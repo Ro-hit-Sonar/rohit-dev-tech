@@ -1,51 +1,102 @@
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+
+const linkColumns = [
+  {
+    title: "Site",
+    links: [
+      { label: "About", href: "/about" },
+      { label: "Posts", href: "/posts" },
+    ],
+  },
+  {
+    title: "Connect",
+    links: [
+      { label: "GitHub", href: "https://github.com/Ro-hit-Sonar" },
+      { label: "LinkedIn", href: "https://www.linkedin.com/in/rohitsonar" },
+      { label: "X", href: "https://x.com/rohitsonar08" },
+    ],
+  },
+];
+
+const isExternal = (href: string) => href.startsWith("http");
+
 export default function Footer() {
   return (
-    <footer className="bg-white border-t border-gray-100">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex flex-col items-center py-16 lg:flex-row lg:justify-between">
-          <div className="mb-8 lg:mb-0 lg:w-1/2">
-            <h3 className="text-2xl font-bold tracking-tight text-gray-900">
-              Made it to the footer? Impressive. Now say hi — left side, you
-              know the drill.
-            </h3>
-          </div>
-          <div className="w-full lg:w-auto">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center lg:text-right">
-              Connect With Us
-            </h3>
-            <div className="flex justify-center lg:justify-end space-x-6">
-              <a
-                href="https://www.linkedin.com/in/rohitsonar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-red-500 transition-colors duration-300"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                </svg>
-              </a>
-              <a
-                href="https://x.com/rohitsonar08"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-600 hover:text-red-500 transition-colors duration-300"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
-                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                </svg>
-              </a>
+    <footer id="contact" className="bg-footer text-footer-foreground">
+      {/* CTA */}
+      <div className="border-b border-footer-foreground/10 px-6 py-20 sm:py-24">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="mb-6 text-balance text-3xl font-light md:text-5xl">
+            Ready to complete the circle?
+          </h2>
+          <p className="mx-auto mb-10 max-w-md text-footer-foreground/60">
+            Got a system worth pulling apart, or something I got wrong? I&apos;d
+            genuinely like to hear about it.
+          </p>
+          <a
+            href="mailto:rohit@airocia.com?subject=Hello%20from%20rohitdev.tech"
+            className="inline-flex items-center gap-2 rounded-full bg-footer-foreground px-8 py-4 font-medium text-footer transition-colors hover:bg-footer-foreground/90"
+          >
+            Say hello
+            <ArrowUpRight className="h-4 w-4" />
+          </a>
+        </div>
+      </div>
+
+      {/* Links */}
+      <div className="px-6 py-16">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="mb-16 grid gap-12 md:grid-cols-3">
+            <div>
+              <div className="mb-6 text-sm font-medium uppercase tracking-[0.2em]">
+                Rohitdev.tech
+              </div>
+              <p className="text-sm leading-relaxed text-footer-foreground/60">
+                Simplifying the complex — system design, DevOps and AI, broken
+                down until they actually make sense.
+              </p>
             </div>
+
+            {linkColumns.map((column) => (
+              <div key={column.title}>
+                <div className="mb-6 text-xs uppercase tracking-[0.2em] text-footer-foreground/40">
+                  {column.title}
+                </div>
+                <ul className="space-y-3 text-sm">
+                  {column.links.map((link) => (
+                    <li key={link.label}>
+                      <Link
+                        href={link.href}
+                        {...(isExternal(link.href)
+                          ? { target: "_blank", rel: "noopener noreferrer" }
+                          : {})}
+                        className="text-footer-foreground/60 transition-colors hover:text-footer-foreground"
+                      >
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
+
+          {/* Bottom bar */}
+          <div className="flex flex-col items-center justify-between border-t border-footer-foreground/10 pt-8 text-sm text-footer-foreground/40 md:flex-row">
+            <div className="mb-4 md:mb-0">
+              &copy; {new Date().getFullYear()} Rohit Sonar. All rights
+              reserved.
+            </div>
+            <div>Built with Next.js &amp; Sanity.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Oversized wordmark */}
+      <div aria-hidden="true" className="relative overflow-hidden py-8">
+        <div className="select-none text-center text-[20vw] font-light leading-none text-footer-foreground/5">
+          ROHITDEV
         </div>
       </div>
     </footer>

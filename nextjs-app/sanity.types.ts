@@ -53,6 +53,79 @@ export type InfoSection = {
   content?: BlockContent;
 };
 
+export type MaintenantItem = {
+  _type: "maintenantItem";
+  word: string;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal";
+    listItem?: never;
+    markDefs?: Array<
+      | {
+          post: PostReference;
+          _type: "reveal";
+          _key: string;
+        }
+      | {
+          linkType?: "href" | "page" | "post";
+          href?: string;
+          page?: PageReference;
+          post?: PostReference;
+          openInNewTab?: boolean;
+          _type: "link";
+          _key: string;
+        }
+    >;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
+};
+
+export type MaintenantSection = {
+  _type: "maintenantSection";
+  heading: string;
+  stem?: string;
+  items?: Array<
+    {
+      _key: string;
+    } & MaintenantItem
+  >;
+};
+
+export type FiguringOutSection = {
+  _type: "figuringOutSection";
+  heading: string;
+  leadLines?: Array<string>;
+  body?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal";
+    listItem?: never;
+    markDefs?: Array<{
+      linkType?: "href" | "page" | "post";
+      href?: string;
+      page?: PageReference;
+      post?: PostReference;
+      openInNewTab?: boolean;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
+};
+
 export type BlockContent = Array<{
   children?: Array<{
     marks?: Array<string>;
@@ -75,6 +148,16 @@ export type BlockContent = Array<{
   _type: "block";
   _key: string;
 }>;
+
+export type HomePage = {
+  _id: string;
+  _type: "homePage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  figuringOut?: FiguringOutSection;
+  maintenant?: MaintenantSection;
+};
 
 export type Page = {
   _id: string;
@@ -448,7 +531,11 @@ export type AllSanitySchemaTypes =
   | Link
   | CallToAction
   | InfoSection
+  | MaintenantItem
+  | MaintenantSection
+  | FiguringOutSection
   | BlockContent
+  | HomePage
   | Page
   | SanityImageAssetReference
   | PersonReference
@@ -575,6 +662,87 @@ export type GetPageQueryResult = {
         }> | null;
       }
   > | null;
+} | null;
+
+// Source: sanity/lib/queries.ts
+// Variable: homePageQuery
+// Query: *[_type == "homePage"][0]{    _id,    _type,    figuringOut{      heading,      leadLines,      body[]{        ...,        markDefs[]{          ...,            _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }        }      }    },    maintenant{      heading,      stem,      items[]{        _key,        word,        body[]{          ...,          markDefs[]{            ...,              _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  },              _type == "reveal" => {    "slug": post->slug.current,    "title": post->title,    "coverImage": post->coverImage  }          }        }      }    },  }
+export type HomePageQueryResult = {
+  _id: string;
+  _type: "homePage";
+  figuringOut: {
+    heading: string;
+    leadLines: Array<string> | null;
+    body: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "normal";
+      listItem?: never;
+      markDefs: Array<{
+        linkType?: "href" | "page" | "post";
+        href?: string;
+        page: string | null;
+        post: string | null;
+        openInNewTab?: boolean;
+        _type: "link";
+        _key: string;
+      }> | null;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }> | null;
+  } | null;
+  maintenant: {
+    heading: string;
+    stem: string | null;
+    items: Array<{
+      _key: string;
+      word: string;
+      body: Array<{
+        children?: Array<{
+          marks?: Array<string>;
+          text?: string;
+          _type: "span";
+          _key: string;
+        }>;
+        style?: "normal";
+        listItem?: never;
+        markDefs: Array<
+          | {
+              linkType?: "href" | "page" | "post";
+              href?: string;
+              page: string | null;
+              post: string | null;
+              openInNewTab?: boolean;
+              _type: "link";
+              _key: string;
+            }
+          | {
+              post: PostReference;
+              _type: "reveal";
+              _key: string;
+              slug: string;
+              title: string;
+              coverImage: {
+                asset?: SanityImageAssetReference;
+                media?: unknown;
+                hotspot?: SanityImageHotspot;
+                crop?: SanityImageCrop;
+                alt?: string;
+                _type: "image";
+              };
+            }
+        > | null;
+        level?: number;
+        _type: "block";
+        _key: string;
+      }> | null;
+    }> | null;
+  } | null;
 } | null;
 
 // Source: sanity/lib/queries.ts
@@ -731,6 +899,7 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "settings"][0]': SettingsQueryResult;
     '\n  *[_type == \'page\' && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    slug,\n    heading,\n    subheading,\n    "pageBuilder": pageBuilder[]{\n      ...,\n      _type == "callToAction" => {\n        \n  link {\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n      }\n,\n      },\n      _type == "infoSection" => {\n        content[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n          }\n        }\n      },\n    },\n  }\n': GetPageQueryResult;
+    '\n  *[_type == "homePage"][0]{\n    _id,\n    _type,\n    figuringOut{\n      heading,\n      leadLines,\n      body[]{\n        ...,\n        markDefs[]{\n          ...,\n          \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n        }\n      }\n    },\n    maintenant{\n      heading,\n      stem,\n      items[]{\n        _key,\n        word,\n        body[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n,\n            \n  _type == "reveal" => {\n    "slug": post->slug.current,\n    "title": post->title,\n    "coverImage": post->coverImage\n  }\n\n          }\n        }\n      }\n    },\n  }\n': HomePageQueryResult;
     '\n  *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult;
     '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult;
     '\n  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult;

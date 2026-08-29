@@ -1,4 +1,5 @@
 import {CogIcon} from '@sanity/icons/Cog'
+import {HomeIcon} from '@sanity/icons/Home'
 import type {StructureBuilder, StructureResolver} from 'sanity/structure'
 import pluralize from 'pluralize-esm'
 
@@ -8,7 +9,7 @@ import pluralize from 'pluralize-esm'
  * Learn more: https://www.sanity.io/docs/structure-builder-introduction
  */
 
-const DISABLED_TYPES = ['settings', 'assist.instruction.context']
+const DISABLED_TYPES = ['settings', 'homePage', 'assist.instruction.context']
 
 export const structure: StructureResolver = (S: StructureBuilder) =>
   S.list()
@@ -21,6 +22,11 @@ export const structure: StructureResolver = (S: StructureBuilder) =>
         .map((listItem) => {
           return listItem.title(pluralize(listItem.getTitle() as string))
         }),
+      // Home Page Singleton — content for the editable sections of the home page.
+      S.listItem()
+        .title('Home Page')
+        .child(S.document().schemaType('homePage').documentId('homePage'))
+        .icon(HomeIcon),
       // Settings Singleton in order to view/edit the one particular document for Settings.  Learn more about Singletons: https://www.sanity.io/docs/create-a-link-to-a-single-edit-page-in-your-main-document-type-list
       S.listItem()
         .title('Site Settings')

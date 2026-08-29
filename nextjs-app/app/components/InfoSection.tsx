@@ -10,7 +10,7 @@ type InfoProps = {
 
 export default function CTA({ block }: InfoProps) {
   return (
-    <div className="container my-12">
+    <div className="mx-auto w-full max-w-6xl px-6 my-12">
       <div className="max-w-3xl">
         {block?.heading && (
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold">
@@ -18,7 +18,7 @@ export default function CTA({ block }: InfoProps) {
           </h2>
         )}
         {block?.subheading && (
-          <span className="block mt-4 mb-8 text-lg uppercase font-light text-gray-900/70">
+          <span className="block mt-4 mb-8 text-lg uppercase font-light text-foreground/70">
             {block.subheading}
           </span>
         )}
