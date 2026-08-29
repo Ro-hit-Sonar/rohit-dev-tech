@@ -10,7 +10,8 @@
     "prebuild": "npm run extract-types",
     "build": "sanity build",
     "deploy": "sanity deploy",
-    "extract-types": "sanity schema extract --enforce-required-fields --force"
+    "extract-types": "sanity schema extract --enforce-required-fields --force",
+    "lint": "eslint ."
   },
   "keywords": [
     "sanity"
@@ -29,9 +30,9 @@
     "styled-components": "^6.1.15"
   },
   "devDependencies": {
-    "@sanity/eslint-config-studio": "^4.0.0",
+    "@sanity/eslint-config-studio": "^7.0.0",
     "@types/react": "^19.2.18",
-    "eslint": "^8.6.0",
+    "eslint": "^10.9.1",
     "prettier": "^3.3.3",
     "typescript": "^5.6.3"
   },
