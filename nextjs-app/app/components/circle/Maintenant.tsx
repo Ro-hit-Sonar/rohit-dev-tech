@@ -70,18 +70,19 @@ export default async function Maintenant() {
   return (
     <section
       id="maintenant"
-      className="border-t border-border bg-background px-6 py-28 sm:py-36"
+      className="bg-background px-6 py-20 sm:py-24"
     >
       <div className="mx-auto w-full max-w-6xl">
-        <p
-          data-sanity={attr("maintenant.heading")}
-          className="mb-16 text-xs uppercase tracking-[0.3em] text-muted-foreground sm:mb-20"
-        >
-          {section.heading}
-        </p>
-
         {items.length > 0 && (
           <MaintenantStack
+            label={
+              <p
+                data-sanity={attr("maintenant.heading")}
+                className="mb-8 text-xs uppercase tracking-[0.3em] text-muted-foreground"
+              >
+                {section.heading}
+              </p>
+            }
             stem={section.stem ?? null}
             words={items.map((item) => item.word as string)}
             bodies={items.map((item) =>

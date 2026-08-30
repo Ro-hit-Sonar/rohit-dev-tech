@@ -6,7 +6,16 @@ import { usePrefersReducedMotion } from "@/app/components/circle/useMediaQuery";
 
 /**
  * The interactive half of the Maintenant section: a held stem whose final word
- * swaps as each body scrolls through the reading zone.
+ * swaps as each body draws level with it.
+ *
+ * Which body is active is decided by measuring distance, not by
+ * IntersectionObserver. The observer version watched the 270px runway block
+ * rather than its 98px of text, judged it against a band that sat below the
+ * pinned heading, and — because a callback only reports entries that *changed*
+ * — chose a winner from a subset of the items. It fired 7 times across the whole
+ * section. Comparing text centre to heading centre says exactly what the design
+ * means ("lit while beside its heading") and is monotonic in scroll, so there is
+ * no state to fall out of sync.
  *
  * The server renders every word and body at full contrast, and `enhanced` only
  * flips to true after hydration. That ordering is deliberate — if this component
@@ -14,10 +23,15 @@ import { usePrefersReducedMotion } from "@/app/components/circle/useMediaQuery";
  * legible list of all three. Nothing is ever hidden waiting for JavaScript.
  */
 export default function MaintenantStack({
+  label,
   stem,
   words,
   bodies,
 }: {
+  /** The section label. Lives inside the sticky column so it pins with the
+   *  stem instead of scrolling away, and is passed as a node so the
+   *  `data-sanity` attribute stays where it is built. */
+  label: React.ReactNode;
   stem: string | null;
   words: string[];
   bodies: React.ReactNode[];
@@ -25,11 +39,12 @@ export default function MaintenantStack({
   const [active, setActive] = useState(0);
   const [enhanced, setEnhanced] = useState(false);
   const prefersReducedMotion = usePrefersReducedMotion();
-  const itemRefs = useRef<(HTMLLIElement | null)[]>([]);
+  const stemRef = useRef<HTMLDivElement | null>(null);
+  const textRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  const setItemRef = useCallback(
-    (index: number) => (node: HTMLLIElement | null) => {
-      itemRefs.current[index] = node;
+  const setTextRef = useCallback(
+    (index: number) => (node: HTMLDivElement | null) => {
+      textRefs.current[index] = node;
     },
     [],
   );
@@ -37,34 +52,63 @@ export default function MaintenantStack({
   useEffect(() => {
     if (prefersReducedMotion) return;
 
-    const nodes = itemRefs.current.filter(Boolean) as HTMLLIElement[];
-    if (nodes.length === 0) return;
+    let frame = 0;
 
-    // A narrow band across the middle of the viewport is the "reading zone".
-    // Choosing whichever entry is most visible inside that band — rather than
-    // simply the last one to intersect — is what stops the word flickering when
-    // two blocks touch the boundary at once.
-    const observer = new IntersectionObserver(
-      (entries) => {
-        setEnhanced(true);
+    const measure = () => {
+      frame = 0;
+      const stem = stemRef.current;
+      if (!stem) return;
 
-        let best = -1;
-        let bestRatio = 0;
-        for (const entry of entries) {
-          if (!entry.isIntersecting) continue;
-          const index = nodes.indexOf(entry.target as HTMLLIElement);
-          if (index !== -1 && entry.intersectionRatio > bestRatio) {
-            bestRatio = entry.intersectionRatio;
-            best = index;
-          }
+      // The anchor is the heading itself, read live so it stays correct while
+      // the stem is entering or leaving its pinned state.
+      const stemBox = stem.getBoundingClientRect();
+      const anchor = stemBox.top + stemBox.height / 2;
+
+      let best = -1;
+      let bestDistance = Infinity;
+      textRefs.current.forEach((node, index) => {
+        if (!node) return;
+        const box = node.getBoundingClientRect();
+        const distance = Math.abs(box.top + box.height / 2 - anchor);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = index;
         }
-        if (best !== -1) setActive(best);
-      },
-      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.25, 0.5, 0.75, 1] },
-    );
+      });
+      if (best === -1) return;
 
-    nodes.forEach((node) => observer.observe(node));
-    return () => observer.disconnect();
+      setEnhanced(true);
+      setActive((current) => {
+        if (best === current) return current;
+        // Distance is monotonic in scroll, so adjacent items cross over exactly
+        // once. The margin only guards against sub-pixel jitter sitting right on
+        // that crossover and flipping back and forth.
+        const currentNode = textRefs.current[current];
+        if (currentNode) {
+          const box = currentNode.getBoundingClientRect();
+          const currentDistance = Math.abs(box.top + box.height / 2 - anchor);
+          if (currentDistance - bestDistance < 8) return current;
+        }
+        return best;
+      });
+    };
+
+    const schedule = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(measure);
+    };
+
+    // Scheduled rather than called directly: setState synchronously inside an
+    // effect body trips react-hooks/set-state-in-effect, which is an error here.
+    schedule();
+
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+    };
   }, [prefersReducedMotion]);
 
   // Before hydration and under reduced motion, every word is shown stacked and
@@ -74,7 +118,8 @@ export default function MaintenantStack({
   return (
     <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
       <div className="lg:col-span-5">
-        <div className="lg:sticky lg:top-32">
+        <div ref={stemRef} className="lg:sticky lg:top-32">
+          {label}
           <p className="text-balance text-[clamp(1.75rem,4vw,3rem)] font-light leading-[1.1] tracking-tight text-muted-foreground">
             {stem}
           </p>
@@ -133,19 +178,23 @@ export default function MaintenantStack({
         {bodies.map((body, index) => (
           <li
             key={index}
-            ref={setItemRef(index)}
-            className={`flex min-h-[34vh] max-w-xl flex-col justify-start py-10 transition-opacity duration-500 lg:min-h-[46vh] lg:pt-2 ${
+            className={`flex min-h-[26vh] max-w-xl flex-col justify-start py-8 transition-opacity duration-500 lg:min-h-[30vh] lg:pt-2 ${
               stacked || index === active ? "opacity-100" : "opacity-30"
             }`}
           >
-            {/* Repeated for the stacked fallback, where no held stem is visible
-                next to the body it belongs to. */}
-            {stacked && (
-              <p className="mb-4 text-sm uppercase tracking-[0.2em] text-muted-foreground">
-                {words[index]}
-              </p>
-            )}
-            {body}
+            {/* The ref sits on the copy, not on the <li>. The <li> is mostly
+                runway — measuring it would decide "which body is beside the
+                heading" from empty space. */}
+            <div ref={setTextRef(index)}>
+              {/* Repeated for the stacked fallback, where no held stem is
+                  visible next to the body it belongs to. */}
+              {stacked && (
+                <p className="mb-4 text-sm uppercase tracking-[0.2em] text-muted-foreground">
+                  {words[index]}
+                </p>
+              )}
+              {body}
+            </div>
           </li>
         ))}
       </ol>
