@@ -25,6 +25,16 @@ export const homePage = defineType({
       title: 'Maintenant',
       type: 'maintenantSection',
     }),
+    defineField({
+      name: 'featured',
+      title: 'Featured',
+      type: 'featuredSection',
+    }),
+    defineField({
+      name: 'community',
+      title: 'In Community',
+      type: 'communitySection',
+    }),
   ],
   preview: {
     prepare() {

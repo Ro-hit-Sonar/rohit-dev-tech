@@ -9,6 +9,8 @@ import {link} from './objects/link'
 import {blockContent} from './objects/blockContent'
 import {figuringOutSection} from './objects/figuringOutSection'
 import {maintenantItem, maintenantSection} from './objects/maintenantSection'
+import {featuredSection} from './objects/featuredSection'
+import {communitySection} from './objects/communitySection'
 
 // Export an array of all the schema types.  This is used in the Sanity Studio configuration. https://www.sanity.io/docs/schema-types
 
@@ -25,6 +27,8 @@ export const schemaTypes = [
   figuringOutSection,
   maintenantSection,
   maintenantItem,
+  featuredSection,
+  communitySection,
   infoSection,
   callToAction,
   link,
