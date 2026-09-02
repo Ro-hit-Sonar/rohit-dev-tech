@@ -76,6 +76,27 @@ export const homePageQuery = defineQuery(`
         }
       }
     },
+    featured{
+      heading,
+      "posts": posts[]->{
+        _id,
+        title,
+        "slug": slug.current,
+        category,
+        coverImage,
+        date,
+        "readingMinutes": round(length(pt::text(content)) / 5 / 200)
+      }
+    },
+    community{
+      label,
+      heading,
+      body,
+      ctaLabel,
+      ctaHref,
+      imageLight,
+      imageDark
+    },
     maintenant{
       heading,
       stem,

@@ -53,6 +53,48 @@ export type InfoSection = {
   content?: BlockContent;
 };
 
+export type SanityImageAssetReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+};
+
+export type CommunitySection = {
+  _type: "communitySection";
+  label?: string;
+  heading: string;
+  body?: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  imageLight?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+  imageDark?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+};
+
+export type FeaturedSection = {
+  _type: "featuredSection";
+  heading: string;
+  posts?: Array<
+    {
+      _key: string;
+    } & PostReference
+  >;
+};
+
 export type MaintenantItem = {
   _type: "maintenantItem";
   word: string;
@@ -157,6 +199,24 @@ export type HomePage = {
   _rev: string;
   figuringOut?: FiguringOutSection;
   maintenant?: MaintenantSection;
+  featured?: FeaturedSection;
+  community?: CommunitySection;
+};
+
+export type SanityImageCrop = {
+  _type: "sanity.imageCrop";
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
+export type SanityImageHotspot = {
+  _type: "sanity.imageHotspot";
+  x: number;
+  y: number;
+  height: number;
+  width: number;
 };
 
 export type Page = {
@@ -179,13 +239,6 @@ export type Page = {
   >;
 };
 
-export type SanityImageAssetReference = {
-  _ref: string;
-  _type: "reference";
-  _weak?: boolean;
-  [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
-};
-
 export type PersonReference = {
   _ref: string;
   _type: "reference";
@@ -202,6 +255,13 @@ export type Post = {
   title: string;
   slug: Slug;
   content?: BlockContent;
+  category?:
+    | "Fundamentals"
+    | "System Design"
+    | "AI"
+    | "Infrastructure"
+    | "Practice"
+    | "Reliability";
   excerpt?: string;
   coverImage: {
     asset?: SanityImageAssetReference;
@@ -231,22 +291,6 @@ export type Person = {
     alt?: string;
     _type: "image";
   };
-};
-
-export type SanityImageCrop = {
-  _type: "sanity.imageCrop";
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
-};
-
-export type SanityImageHotspot = {
-  _type: "sanity.imageHotspot";
-  x: number;
-  y: number;
-  height: number;
-  width: number;
 };
 
 export type Slug = {
@@ -531,18 +575,20 @@ export type AllSanitySchemaTypes =
   | Link
   | CallToAction
   | InfoSection
+  | SanityImageAssetReference
+  | CommunitySection
+  | FeaturedSection
   | MaintenantItem
   | MaintenantSection
   | FiguringOutSection
   | BlockContent
   | HomePage
+  | SanityImageCrop
+  | SanityImageHotspot
   | Page
-  | SanityImageAssetReference
   | PersonReference
   | Post
   | Person
-  | SanityImageCrop
-  | SanityImageHotspot
   | Slug
   | Settings
   | SanityAssistInstructionTask
@@ -666,7 +712,7 @@ export type GetPageQueryResult = {
 
 // Source: sanity/lib/queries.ts
 // Variable: homePageQuery
-// Query: *[_type == "homePage"][0]{    _id,    _type,    figuringOut{      heading,      leadLines,      body[]{        ...,        markDefs[]{          ...,            _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }        }      }    },    maintenant{      heading,      stem,      items[]{        _key,        word,        body[]{          ...,          markDefs[]{            ...,              _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  },              _type == "reveal" => {    "slug": post->slug.current,    "title": post->title,    "coverImage": post->coverImage  }          }        }      }    },  }
+// Query: *[_type == "homePage"][0]{    _id,    _type,    figuringOut{      heading,      leadLines,      body[]{        ...,        markDefs[]{          ...,            _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }        }      }    },    featured{      heading,      "posts": posts[]->{        _id,        title,        "slug": slug.current,        category,        coverImage,        date,        "readingMinutes": round(length(pt::text(content)) / 5 / 200)      }    },    community{      label,      heading,      body,      ctaLabel,      ctaHref,      imageLight,      imageDark    },    maintenant{      heading,      stem,      items[]{        _key,        word,        body[]{          ...,          markDefs[]{            ...,              _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  },              _type == "reveal" => {    "slug": post->slug.current,    "title": post->title,    "coverImage": post->coverImage  }          }        }      }    },  }
 export type HomePageQueryResult = {
   _id: string;
   _type: "homePage";
@@ -695,6 +741,55 @@ export type HomePageQueryResult = {
       _type: "block";
       _key: string;
     }> | null;
+  } | null;
+  featured: {
+    heading: string;
+    posts: Array<{
+      _id: string;
+      title: string;
+      slug: string;
+      category:
+        | "AI"
+        | "Fundamentals"
+        | "Infrastructure"
+        | "Practice"
+        | "Reliability"
+        | "System Design"
+        | null;
+      coverImage: {
+        asset?: SanityImageAssetReference;
+        media?: unknown;
+        hotspot?: SanityImageHotspot;
+        crop?: SanityImageCrop;
+        alt?: string;
+        _type: "image";
+      };
+      date: string | null;
+      readingMinutes: number;
+    }> | null;
+  } | null;
+  community: {
+    label: string | null;
+    heading: string;
+    body: string | null;
+    ctaLabel: string | null;
+    ctaHref: string | null;
+    imageLight: {
+      asset?: SanityImageAssetReference;
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    } | null;
+    imageDark: {
+      asset?: SanityImageAssetReference;
+      media?: unknown;
+      hotspot?: SanityImageHotspot;
+      crop?: SanityImageCrop;
+      alt?: string;
+      _type: "image";
+    } | null;
   } | null;
   maintenant: {
     heading: string;
@@ -899,7 +994,7 @@ declare module "@sanity/client" {
   interface SanityQueries {
     '*[_type == "settings"][0]': SettingsQueryResult;
     '\n  *[_type == \'page\' && slug.current == $slug][0]{\n    _id,\n    _type,\n    name,\n    slug,\n    heading,\n    subheading,\n    "pageBuilder": pageBuilder[]{\n      ...,\n      _type == "callToAction" => {\n        \n  link {\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n      }\n,\n      },\n      _type == "infoSection" => {\n        content[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n          }\n        }\n      },\n    },\n  }\n': GetPageQueryResult;
-    '\n  *[_type == "homePage"][0]{\n    _id,\n    _type,\n    figuringOut{\n      heading,\n      leadLines,\n      body[]{\n        ...,\n        markDefs[]{\n          ...,\n          \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n        }\n      }\n    },\n    maintenant{\n      heading,\n      stem,\n      items[]{\n        _key,\n        word,\n        body[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n,\n            \n  _type == "reveal" => {\n    "slug": post->slug.current,\n    "title": post->title,\n    "coverImage": post->coverImage\n  }\n\n          }\n        }\n      }\n    },\n  }\n': HomePageQueryResult;
+    '\n  *[_type == "homePage"][0]{\n    _id,\n    _type,\n    figuringOut{\n      heading,\n      leadLines,\n      body[]{\n        ...,\n        markDefs[]{\n          ...,\n          \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n        }\n      }\n    },\n    featured{\n      heading,\n      "posts": posts[]->{\n        _id,\n        title,\n        "slug": slug.current,\n        category,\n        coverImage,\n        date,\n        "readingMinutes": round(length(pt::text(content)) / 5 / 200)\n      }\n    },\n    community{\n      label,\n      heading,\n      body,\n      ctaLabel,\n      ctaHref,\n      imageLight,\n      imageDark\n    },\n    maintenant{\n      heading,\n      stem,\n      items[]{\n        _key,\n        word,\n        body[]{\n          ...,\n          markDefs[]{\n            ...,\n            \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n,\n            \n  _type == "reveal" => {\n    "slug": post->slug.current,\n    "title": post->title,\n    "coverImage": post->coverImage\n  }\n\n          }\n        }\n      }\n    },\n  }\n': HomePageQueryResult;
     '\n  *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult;
     '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult;
     '\n  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult;

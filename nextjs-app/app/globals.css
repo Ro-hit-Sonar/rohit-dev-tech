@@ -297,6 +297,104 @@
   opacity: var(--line-opacity, 1);
 }
 
+/* ---------------------------------------------------------------------------
+ * The community collage strip.
+ *
+ * Two artworks exist, one per theme, and only the active one may ever be
+ * fetched. Handing the URLs to CSS as custom properties achieves that: a
+ * background-image declared in a rule that does not match is never requested.
+ * Two <img> tags toggled with `dark:hidden` would download both.
+ *
+ * `cover` is right here, unlike the earlier version that drew the whole
+ * artwork: the strip is deliberately a crop, and its aspect ratio is what
+ * chooses the band. The box is always wider than the source's 16:9, so `cover`
+ * scales to width and shows a horizontal slice — the whole collage at 16/9 on
+ * a phone, its middle 38% at the desktop 4.73:1. Width-driven also means the
+ * scale factor is viewport/2560, which never exceeds 1.
+ *
+ * No mask, and the ground is --background rather than --card. Both artworks
+ * were built to vignette into --background: their outer pixels measure 245 in
+ * light and 11 in dark, against 245 and ~13 for that token (--card is 255 and
+ * ~22, which would leave a visible rectangle edge where the strip lands). The
+ * artwork blends itself, so a fade would only hide photographs — the copy sits
+ * above the strip now, not over it, so nothing needs protecting either.
+ * ------------------------------------------------------------------------ */
+.collage-strip {
+  background-image: var(--collage-light);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dark .collage-strip {
+  background-image: var(--collage-dark);
+}
+
+/* ---------------------------------------------------------------------------
+ * Featured numerals.
+ *
+ * Two stacked copies of the glyph: a hollow outline that is always there, and a
+ * solid fill whose opacity is driven by the row's scroll position. Rows above
+ * the reading zone read as filled, rows below as outlines — so the numeral
+ * reports where you are rather than just labelling the row.
+ * ------------------------------------------------------------------------ */
+
+/* The fill is solid by DEFAULT. Everything that dims it is additive and
+ * conditional, so a browser without scroll timelines — or a reader who asked
+ * for reduced motion — gets legible numerals instead of invisible ones. */
+.numeral-fill {
+  opacity: 1;
+}
+
+.numeral-outline {
+  color: transparent;
+}
+
+/* `color: transparent` with no stroke would render nothing at all, so the
+ * transparent fill is only applied where the stroke is actually supported. */
+@supports not (-webkit-text-stroke: 1px currentColor) {
+  .numeral-outline {
+    color: currentColor;
+    opacity: 0.22;
+  }
+}
+
+@supports (-webkit-text-stroke: 1px currentColor) {
+  .numeral-outline {
+    /* An explicit stroke colour, NOT currentColor: currentColor resolves against
+       this element's own `color`, which is transparent here, so the stroke would
+       be transparent too and the hollow numeral would vanish entirely rather
+       than read as an outline. --border matches the section's hairlines. */
+    -webkit-text-stroke: 1px var(--border);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    /* Named on the ROW, referenced from the glyph. A bare view() on the glyph
+     * would measure its own short pass through the viewport and finish almost
+     * as soon as it appeared; the row is the thing the reader is arriving at. */
+    .numeral-scope {
+      view-timeline-name: --numeral-row;
+    }
+
+    .numeral-fill {
+      animation: numeral-fill-in linear both;
+      animation-timeline: --numeral-row;
+      animation-range: entry 60% cover 35%;
+    }
+  }
+}
+
+@keyframes numeral-fill-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes scroll-line-in {
   from {
     opacity: calc(var(--line-opacity, 1) * 0.14);
