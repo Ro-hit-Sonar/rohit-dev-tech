@@ -145,7 +145,45 @@ export const postQuery = defineQuery(`
       ${linkReference}
     }
   },
+    category,
+    "readingMinutes": round(length(pt::text(content)) / 5 / 200),
     ${postFields}
+  }
+`);
+
+/**
+ * The metadata head, without the body.
+ *
+ * `generateMetadata` and the page render are already two separate requests —
+ * they differ on \`stega\`, so they were never deduped — and the metadata one
+ * had no business paying to fetch and serialise a whole article.
+ */
+export const postMetaQuery = defineQuery(`
+  *[_type == "post" && slug.current == $slug] [0] {
+    "title": coalesce(title, "Untitled"),
+    excerpt,
+    coverImage,
+    "author": author->{firstName, lastName},
+  }
+`);
+
+/**
+ * The rows under an article. Projects exactly what `BlogEntry` renders, so the
+ * hand-off reads as an excerpt of /blogs rather than a second rendering of it.
+ *
+ * Excluded on slug rather than `_id`: a draft's `_id` is `drafts.<id>`, so an
+ * `_id != $skip` filter would leave the published copy of the very post you are
+ * reading sitting in its own "more blogs" list while you preview the draft.
+ */
+export const moreBlogsQuery = defineQuery(`
+  *[_type == "post" && defined(slug.current) && slug.current != $slug]
+    | order(date desc, _updatedAt desc) [0...$limit] {
+    _id,
+    "title": coalesce(title, "Untitled"),
+    "slug": slug.current,
+    category,
+    "date": coalesce(date, _updatedAt),
+    "readingMinutes": round(length(pt::text(content)) / 5 / 200)
   }
 `);
 
@@ -157,4 +195,21 @@ export const postPagesSlugs = defineQuery(`
 export const pagesSlugs = defineQuery(`
   *[_type == "page" && defined(slug.current)]
   {"slug": slug.current}
+`);
+
+/**
+ * The /blogs index. A dedicated projection rather than `postFields` so the
+ * cheap list queries don't pay for `pt::text(content)`, and so the fields this
+ * page never shows — excerpt, author, draft status, cover image — aren't
+ * fetched at all. The rows are typographic; there is no image on this page.
+ */
+export const blogsIndexQuery = defineQuery(`
+  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {
+    _id,
+    "title": coalesce(title, "Untitled"),
+    "slug": slug.current,
+    category,
+    "date": coalesce(date, _updatedAt),
+    "readingMinutes": round(length(pt::text(content)) / 5 / 200)
+  }
 `);

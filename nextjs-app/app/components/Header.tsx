@@ -5,7 +5,7 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 
 const navLinks = [
   { href: "/about", label: "About" },
-  { href: "/posts", label: "Posts" },
+  { href: "/blogs", label: "Blogs" },
 ];
 
 export default function Header() {

@@ -6,7 +6,7 @@ const linkColumns = [
     title: "Site",
     links: [
       { label: "About", href: "/about" },
-      { label: "Posts", href: "/posts" },
+      { label: "Blogs", href: "/blogs" },
     ],
   },
   {

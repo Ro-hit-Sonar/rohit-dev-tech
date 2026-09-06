@@ -161,3 +161,156 @@ duplicated peer therefore survive every incremental install. Deleting `package-l
 `node_modules` forces a real re-solve — and is the only local reproduction of what CI does.
 Relatedly, `npm warn deprecated` only prints on *fresh downloads*, so a warm `node_modules` will
 falsely look clean.
+
+### The blogs index filters on the client, over a fully server-rendered list — 2026-09-03
+**Tier:** Pattern
+**Decision:** `/blogs` fetches every post on the server with a dedicated `blogsIndexQuery`, renders
+the whole list, and hands it to one client island (`BlogsIndex`) that narrows it in memory. The
+category pills, the search box and `VIEW MORE` are all local state — no URL search params, no
+refetch, no server round-trip. Filtering is *derived during render*; there is no `useEffect`
+anywhere in the file.
+**Why:** The list is already on the page. Once the server has sent all 48 rows, narrowing them is a
+question about text the reader can already see — turning that into a network request would make an
+instant interaction slower and add a loading state that has nothing to load. It also settles the
+no-JavaScript story in the direction this codebase already committed to: the island server-renders,
+so without JS a reader still gets the masthead, the rules and the first page of rows. Only the
+narrowing is missing. Nothing sits hidden waiting for a script.
+The no-effect part is not stylistic. `react-hooks/set-state-in-effect` is an **error** in this repo,
+and the thing an effect would be reached for here — resetting the "how many rows are shown" counter
+when a filter changes — is exactly the wrong tool: the pill and search callbacks set both pieces of
+state in the same tick, so they cannot disagree in the first place. An effect would introduce a
+render where the count and the filter are out of step.
+**Alternatives considered:** `?category=…&q=…` in the URL with server-side filtering — rejected for
+now: it buys shareable filtered links, but costs a round-trip per keystroke and a debounce, on a
+dataset small enough to filter in under a millisecond. Worth revisiting if the archive grows large
+enough to need real pagination, at which point the URL becomes the right place for the state.
+Extending the shared `postFields` fragment instead of writing a new query — rejected: the index
+needs `category` and `readingMinutes`, and `readingMinutes` costs a `pt::text(content)` over every
+post's whole body, which `morePostsQuery` and `postQuery` should not pay for.
+**Concept for the learner:** "Where does this state live?" has three answers — the URL, the server,
+or the component — and the deciding question is *who else needs it*. URL state is for anything
+someone might link to, bookmark, or hit Back on. Server state is for anything that requires data the
+client does not have. Component state is for everything else, and a filter over an already-loaded
+list is squarely in the third bucket. Choosing the URL here would have been "more correct" in the
+abstract while being slower and more code in practice.
+The second idea worth keeping: *derive, don't synchronise*. Every time you feel the urge to write an
+effect that copies one piece of state into another, look for the place where both can be set
+together, or for a value that can simply be computed from what you already have. `matches` here is
+recomputed on every render from `rows`, `active` and `query` — there is no `filteredRows` state to
+fall out of date, and that is why the component has no bugs of the "stale list" kind.
+
+### `/posts` becomes `/blogs`, with a 307 rather than a 308 — 2026-09-03
+**Tier:** Pattern
+**Decision:** The post index lives at `/blogs`, and the nav, the footer and the featured ledger's
+trailing link all say "Blogs" and point there. Post *detail* pages stay at `/posts/[slug]`.
+`/posts` is redirected to `/blogs` in `next.config.ts` with `permanent: false`.
+**Why:** Three separate links — Header, Footer, and the "All posts" link under the featured ledger —
+pointed at `/posts`, which had no route file. Requests fell through to `app/[slug]/page.tsx`, found
+no `page` document with that slug, and rendered the Sanity template's `PageOnboarding`: a red slab
+reading "About Page (/about) does not exist yet". So the site's main navigation had three dead ends
+into template scaffolding.
+The detail routes did not move with the index because `/posts/[slug]` is the permalink shape: it is
+built by `linkResolver`, by the `reveal` annotation's serializer, by `sitemap.ts`, and by every
+existing shared or indexed URL. Renaming it would break all of them to buy nothing but symmetry.
+`permanent: false` because `/posts` never actually resolved to an index. A 308 tells browsers to
+cache the move *forever*, and browsers honour that aggressively — it is very hard to take back. A
+307 costs one extra request per visit to a URL nobody was successfully using, and stays reversible.
+**Alternatives considered:** Building the index at `/posts` instead — a real option, and it needs no
+redirect, but the page is titled "Blogs" and Rohit wanted the word to be "Blogs" everywhere, so a
+`/posts` URL would have been the one place it wasn't. Adding a rewrite instead of a redirect —
+rejected: a rewrite would serve the index at two URLs, which splits search-engine signal between
+them for no benefit.
+**Concept for the learner:** `permanent: true`/`false` maps to HTTP 308/301 and 307/302, and the
+difference is caching, not semantics — a permanent redirect can be cached by browsers and
+intermediaries indefinitely, which makes it the one routing decision that is genuinely hard to
+reverse. Reach for it only once a URL has real history worth consolidating.
+Also worth noting where redirects sit in the pipeline: Next checks them *before* the filesystem, so
+`source: "/posts"` wins over any route file at that path. And it is an exact match by default —
+`/posts/some-slug` does not match `/posts`, which is why the detail routes need no protecting.
+
+### Post titles rest quiet and lift on hover — 2026-09-03
+**Tier:** Pattern
+**Decision:** Reversed the hover treatment on editorial post titles in both lists. They were
+`text-foreground` at rest dimming to `group-hover:opacity-60`; they are now `text-muted-foreground`
+at rest brightening to `group-hover:text-foreground`, with `transition-colors` in place of
+`transition-opacity`. Applied to `app/blogs/BlogEntry.tsx` **and** `app/components/circle/
+FeaturedEntry.tsx`. Separately, the blogs row's hover cover-image thumbnail was removed, and with it
+`coverImage` from `blogsIndexQuery`.
+**Why:** The old direction was backwards as an affordance. Dimming on hover means the element you
+are pointing at is the *least* legible thing on screen at the moment you are reading it, and in
+light mode it made the list read dark-then-washed-out. The new direction also matches what every
+control on the site already does — nav links, filter pills, VIEW MORE, footer links are all
+`text-muted-foreground` → `hover:text-foreground`. Titles were the only thing running the other way.
+Both lists changed rather than only the one that was reported: a reader who learns the interaction
+on `/blogs` should find the same thing on the homepage, and two post lists responding in opposite
+directions to the same gesture is a bug you cannot see in either one alone.
+Two solid tokens, not an alpha. This file already records that `text-muted-foreground/70` measured
+**3.01:1** on the light ground — under AA for 12px — and that the alpha needed to clear 4.5 left no
+visible step. Measured after the change: `/blogs` title 5.51 → 18.05 light, 7.66 → 18.97 dark;
+Featured 6.01 → 19.68 light, 7.19 → 17.8 dark. All resting values clear AA.
+The blogs row's date came down from `text-foreground/80` (10.43:1) to plain `text-muted-foreground`
+at the same time. With the title resting muted, a near-black date would have made the *metadata*
+the loudest thing in every row.
+**Alternatives considered:** Lifting the whole row on hover rather than the title alone — rejected
+by Rohit; four things moving at once is a weaker signal than one. Keeping the date dark for the
+tonal step the design shows — rejected for the hierarchy inversion above. Deleting
+`useHoverThumbnail.tsx` after removing it from the blogs row — rejected: `FeaturedEntry` and
+`RevealLink` still use it, so the file stays and only the one call site went.
+**Concepts for the learner:** First, *hover should add signal, not remove it*. The question to ask
+of any hover state is "does this make the thing under the cursor easier to act on?" Dimming fails
+that test even when it looks stylish, and it is worth noticing that the codebase had already got
+this right everywhere except the titles — the inconsistency was the tell.
+Second, a measurement trap worth remembering: `transition-colors duration-300` means the computed
+colour is a *moving value* for 300ms after any change. Sampling `getComputedStyle(...).color` 120ms
+after toggling the theme returned mid-interpolation garbage that looked exactly like a real contrast
+regression — the dark title read 4.88:1 at rest and 3.72:1 on hover, i.e. hover *worse* than rest,
+which is impossible for the classes involved. The neighbouring date, which has no transition,
+snapped to its correct value in the same sample and was the clue. Always let transitions settle
+before measuring, and treat a physically impossible reading as a broken instrument first.
+Third, when a feature is removed, follow it back up the chain: dropping the thumbnail made the
+`imageUrl` prop dead, which made `urlForImage` dead, which made `coverImage` in the GROQ projection
+dead. A query that still fetches fields nothing reads is how the data layer quietly rots.
+
+### The reading page ranks headings by tier, not by tag — 2026-09-04
+**Tier:** Architecture
+**Decision:** Rebuilt `/posts/[slug]` around a centred 45rem measure with a collapsible contents
+panel. `app/posts/[slug]/outline.ts` walks the body once and returns two things from the same pass:
+the blocks to render, with each heading augmented with a `headingId` and a `headingTier`, and the
+list the panel shows. A heading's rank comes from `min(level - shallowestLevelInThisPost, 2)` —
+tier 0 renders `<h2>`, tier 1 `<h3>`, tier 2+ `<h4>` — rather than from whatever tag the author
+typed. Body typography is hand-rolled in `PostBody.tsx`; the shared `PortableText.tsx` keeps `prose`
+for the page builder and was not touched.
+**Why:** The content disagrees with itself. Measured across all 48 posts: 291 headings sit at the
+shallowest level and 41 one step in, but *which tag* that shallowest level uses varies — "Docker"
+and "What Is the Cloud" use h3 with no h2 anywhere, "Load Balancers" and "The Art of Downtime" use
+h2. Ranking by tag would render half the archive's section headings at sub-heading size, and a
+contents panel built on "list the h2s" would have been **empty on a third of the posts**.
+Deriving the id and the rank in the same walk is what makes the panel structurally incapable of
+lying about the body. The page it replaced is the cautionary tale: its h1/h2 serializers rendered an
+anchor link to `#{_key}` while nothing on the page ever carried a matching `id`, so every one of
+those links was dead. Verified after the rebuild: **332 contents links across 48 posts, zero dead
+anchors**, and exactly one `<h1>` per page (there was previously none — the title was an `<h2>`).
+Two edge cases turned out to be real rather than theoretical, which is the argument for handling
+them up front: one heading in the archive slugs to the empty string (it would have produced
+`id=""` on every such heading, colliding them all), and one post has no headings at all.
+**Alternatives considered:** `@tailwindcss/typography` with `prose-*` overrides — rejected on ~22
+overrides plus `max-w-none`, but decisively because `prose` sizes headings *by tag* and this page
+sizes them *by rank*; no `prose-h3:` configuration can say "large when it is the shallowest heading
+here". Normalising only the contents panel and leaving the body on its raw tags — rejected: the two
+halves of the page would then describe different documents. Editing the shared `PortableText.tsx` —
+rejected, it renders `InfoSection` and would have silently restyled `/about`.
+**Concepts for the learner:** First, *derive once, use twice*. Any time two parts of a page have to
+agree about the same structure, generate both from one pass rather than computing each from the
+source separately. The old broken anchors are what "computed separately" looks like after a few
+months.
+Second, a native element beats a component when it exists. The contents panel is a `<details open>`:
+keyboard operable, disclosure state exposed to assistive tech, open on the server with no
+JavaScript. The only client code is the scroll-spy highlight, so the panel works completely before
+any script runs — which is the house rule this repo already committed to.
+Third, and the bug worth remembering: the highlight was originally driven by an IntersectionObserver
+and landed **one entry short** after every contents-link click. An observer fires when an element
+*crosses* a boundary and delivers nothing once the page comes to rest, so the last callback arrived
+while the smooth scroll was still moving. A rAF-throttled `scroll` listener that re-measures every
+heading from scratch is both simpler and provably correct: it cannot miss a resting position, and a
+dropped frame is harmless because nothing is accumulated. Reach for an observer when you care about
+*transitions*, not when you care about *current state*.

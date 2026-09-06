@@ -444,3 +444,20 @@
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
 }
+
+/* ---------------------------------------------------------------------------
+ * Smooth anchor jumps, on the reading page only.
+ *
+ * `scroll-behavior` has to sit on the scrolling element to affect anchor
+ * navigation at all, and setting it on `html` unconditionally would also
+ * animate the scroll-to-top Next performs on EVERY route change, site-wide.
+ * `:has()` scopes it to documents that actually contain a contents panel.
+ *
+ * The reduced-motion guard is required, not decorative: a long smooth scroll is
+ * one of the motions that reliably triggers vestibular symptoms.
+ * ------------------------------------------------------------------------ */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.post-toc) {
+    scroll-behavior: smooth;
+  }
+}

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import FeaturedEntry from "@/app/components/circle/FeaturedEntry";
+import { monthYear } from "@/lib/utils";
 import { sanityFetch } from "@/sanity/lib/live";
 import { homePageQuery } from "@/sanity/lib/queries";
 import { dataAttr, urlForImage } from "@/sanity/lib/utils";
@@ -9,19 +10,11 @@ import { dataAttr, urlForImage } from "@/sanity/lib/utils";
 /**
  * The featured index, as a ledger.
  *
- * Deliberately NOT a card grid: `Posts.tsx` further down this page already
- * renders rounded, bordered, shadowed cards with an image and an excerpt, so a
- * second one here would read as a duplicate of the list beneath it. Rules and
- * numerals carry the structure instead, and the cover images appear only on
- * hover — so the section stays typographic at rest.
+ * Deliberately NOT a card grid. Rules and numerals carry the structure, and the
+ * cover images appear only on hover, so the section stays typographic at rest —
+ * and so it reads as an excerpt of /blogs rather than a competing rendering of
+ * it. The trailing link hands the reader over to the full index.
  */
-
-const monthYear = (iso: string | null) =>
-  iso
-    ? new Date(iso)
-        .toLocaleDateString("en-GB", { month: "short", year: "numeric" })
-        .toUpperCase()
-    : null;
 
 export default async function Featured() {
   const { data } = await sanityFetch({ query: homePageQuery });
@@ -83,10 +76,10 @@ export default async function Featured() {
 
         <div className="flex justify-end border-t border-border pt-6">
           <Link
-            href="/posts"
+            href="/blogs"
             className="group inline-flex items-center gap-3 text-xs uppercase tracking-[0.3em] text-muted-foreground transition-colors hover:text-foreground"
           >
-            All posts
+            All blogs
             <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
           </Link>
         </div>

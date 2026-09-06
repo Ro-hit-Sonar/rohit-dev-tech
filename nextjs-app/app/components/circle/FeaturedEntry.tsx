@@ -65,7 +65,7 @@ export default function FeaturedEntry({
             <span>{category}</span>
             <span className="whitespace-nowrap text-right">{meta}</span>
           </span>
-          <span className="block text-pretty text-[clamp(1.25rem,2.2vw,1.875rem)] font-light leading-[1.2] tracking-tight text-foreground transition-opacity duration-300 group-hover:opacity-60 group-focus-visible:opacity-60">
+          <span className="block text-pretty text-[clamp(1.25rem,2.2vw,1.875rem)] font-light leading-[1.2] tracking-tight text-muted-foreground transition-colors duration-300 group-hover:text-foreground group-focus-visible:text-foreground">
             {title}
           </span>
         </span>

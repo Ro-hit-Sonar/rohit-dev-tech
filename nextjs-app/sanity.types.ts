@@ -922,7 +922,7 @@ export type MorePostsQueryResult = Array<{
 
 // Source: sanity/lib/queries.ts
 // Variable: postQuery
-// Query: *[_type == "post" && slug.current == $slug] [0] {    content[]{    ...,    markDefs[]{      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }    }  },      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
+// Query: *[_type == "post" && slug.current == $slug] [0] {    content[]{    ...,    markDefs[]{      ...,        _type == "link" => {    "page": page->slug.current,    "post": post->slug.current  }    }  },    category,    "readingMinutes": round(length(pt::text(content)) / 5 / 200),      _id,  "status": select(_originalId in path("drafts.**") => "draft", "published"),  "title": coalesce(title, "Untitled"),  "slug": slug.current,  excerpt,  coverImage,  "date": coalesce(date, _updatedAt),  "author": author->{firstName, lastName, picture},  }
 export type PostQueryResult = {
   content: Array<{
     children?: Array<{
@@ -946,6 +946,15 @@ export type PostQueryResult = {
     _type: "block";
     _key: string;
   }> | null;
+  category:
+    | "AI"
+    | "Fundamentals"
+    | "Infrastructure"
+    | "Practice"
+    | "Reliability"
+    | "System Design"
+    | null;
+  readingMinutes: number;
   _id: string;
   status: "draft" | "published";
   title: string;
@@ -975,6 +984,45 @@ export type PostQueryResult = {
 } | null;
 
 // Source: sanity/lib/queries.ts
+// Variable: postMetaQuery
+// Query: *[_type == "post" && slug.current == $slug] [0] {    "title": coalesce(title, "Untitled"),    excerpt,    coverImage,    "author": author->{firstName, lastName},  }
+export type PostMetaQueryResult = {
+  title: string;
+  excerpt: string | null;
+  coverImage: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+  author: {
+    firstName: string;
+    lastName: string;
+  } | null;
+} | null;
+
+// Source: sanity/lib/queries.ts
+// Variable: moreBlogsQuery
+// Query: *[_type == "post" && defined(slug.current) && slug.current != $slug]    | order(date desc, _updatedAt desc) [0...$limit] {    _id,    "title": coalesce(title, "Untitled"),    "slug": slug.current,    category,    "date": coalesce(date, _updatedAt),    "readingMinutes": round(length(pt::text(content)) / 5 / 200)  }
+export type MoreBlogsQueryResult = Array<{
+  _id: string;
+  title: string;
+  slug: string;
+  category:
+    | "AI"
+    | "Fundamentals"
+    | "Infrastructure"
+    | "Practice"
+    | "Reliability"
+    | "System Design"
+    | null;
+  date: string;
+  readingMinutes: number;
+}>;
+
+// Source: sanity/lib/queries.ts
 // Variable: postPagesSlugs
 // Query: *[_type == "post" && defined(slug.current)]  {"slug": slug.current}
 export type PostPagesSlugsResult = Array<{
@@ -988,6 +1036,25 @@ export type PagesSlugsResult = Array<{
   slug: string;
 }>;
 
+// Source: sanity/lib/queries.ts
+// Variable: blogsIndexQuery
+// Query: *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {    _id,    "title": coalesce(title, "Untitled"),    "slug": slug.current,    category,    "date": coalesce(date, _updatedAt),    "readingMinutes": round(length(pt::text(content)) / 5 / 200)  }
+export type BlogsIndexQueryResult = Array<{
+  _id: string;
+  title: string;
+  slug: string;
+  category:
+    | "AI"
+    | "Fundamentals"
+    | "Infrastructure"
+    | "Practice"
+    | "Reliability"
+    | "System Design"
+    | null;
+  date: string;
+  readingMinutes: number;
+}>;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -998,8 +1065,11 @@ declare module "@sanity/client" {
     '\n  *[_type == "page" || _type == "post" && defined(slug.current)] | order(_type asc) {\n    "slug": slug.current,\n    _type,\n    _updatedAt,\n  }\n': SitemapDataResult;
     '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': AllPostsQueryResult;
     '\n  *[_type == "post" && _id != $skip && defined(slug.current)] | order(date desc, _updatedAt desc) [0...$limit] {\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': MorePostsQueryResult;
-    '\n  *[_type == "post" && slug.current == $slug] [0] {\n    content[]{\n    ...,\n    markDefs[]{\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n    }\n  },\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': PostQueryResult;
+    '\n  *[_type == "post" && slug.current == $slug] [0] {\n    content[]{\n    ...,\n    markDefs[]{\n      ...,\n      \n  _type == "link" => {\n    "page": page->slug.current,\n    "post": post->slug.current\n  }\n\n    }\n  },\n    category,\n    "readingMinutes": round(length(pt::text(content)) / 5 / 200),\n    \n  _id,\n  "status": select(_originalId in path("drafts.**") => "draft", "published"),\n  "title": coalesce(title, "Untitled"),\n  "slug": slug.current,\n  excerpt,\n  coverImage,\n  "date": coalesce(date, _updatedAt),\n  "author": author->{firstName, lastName, picture},\n\n  }\n': PostQueryResult;
+    '\n  *[_type == "post" && slug.current == $slug] [0] {\n    "title": coalesce(title, "Untitled"),\n    excerpt,\n    coverImage,\n    "author": author->{firstName, lastName},\n  }\n': PostMetaQueryResult;
+    '\n  *[_type == "post" && defined(slug.current) && slug.current != $slug]\n    | order(date desc, _updatedAt desc) [0...$limit] {\n    _id,\n    "title": coalesce(title, "Untitled"),\n    "slug": slug.current,\n    category,\n    "date": coalesce(date, _updatedAt),\n    "readingMinutes": round(length(pt::text(content)) / 5 / 200)\n  }\n': MoreBlogsQueryResult;
     '\n  *[_type == "post" && defined(slug.current)]\n  {"slug": slug.current}\n': PostPagesSlugsResult;
     '\n  *[_type == "page" && defined(slug.current)]\n  {"slug": slug.current}\n': PagesSlugsResult;
+    '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    _id,\n    "title": coalesce(title, "Untitled"),\n    "slug": slug.current,\n    category,\n    "date": coalesce(date, _updatedAt),\n    "readingMinutes": round(length(pt::text(content)) / 5 / 200)\n  }\n': BlogsIndexQueryResult;
   }
 }
