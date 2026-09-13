@@ -17,17 +17,17 @@ export default function Header() {
           href="/"
           className="shrink-0 text-xs font-medium uppercase tracking-[0.2em] text-foreground transition-colors hover:text-brand sm:text-sm"
         >
-          Rohitdev
+          Rohittech
           {/* The suffix is the first thing to go when the bar gets tight. */}
-          <span className="hidden text-muted-foreground sm:inline">.tech</span>
+          <span className="hidden text-muted-foreground sm:inline">.in</span>
         </Link>
 
-        <nav className="flex items-center gap-3 sm:gap-8">
+        <nav className="flex items-center gap-2 sm:gap-8">
           {/* text-xs below sm: a third nav item pushed the bar 21px past its
               container at 375, overlapping the wordmark. The bar sheds weight
-              as it tightens — the .tech suffix first, then LinkedIn, now the
+              as it tightens — the domain suffix first, then LinkedIn, now the
               label size and GitHub. */}
-          <ul className="flex items-center gap-3 text-xs sm:gap-8 sm:text-sm">
+          <ul className="flex items-center gap-2 text-xs sm:gap-8 sm:text-sm">
             {navLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link

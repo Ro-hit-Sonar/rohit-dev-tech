@@ -36,7 +36,7 @@ export default function Footer() {
             genuinely like to hear about it.
           </p>
           <a
-            href="mailto:rohit@airocia.com?subject=Hello%20from%20rohitdev.tech"
+            href="mailto:rohit@airocia.com?subject=Hello%20from%20rohittech.in"
             className="inline-flex items-center gap-2 rounded-full bg-footer-foreground px-8 py-4 font-medium text-footer transition-colors hover:bg-footer-foreground/90"
           >
             Say hello
@@ -51,7 +51,7 @@ export default function Footer() {
           <div className="mb-16 grid gap-12 md:grid-cols-3">
             <div>
               <div className="mb-6 text-sm font-medium uppercase tracking-[0.2em]">
-                Rohitdev.tech
+                Rohittech.in
               </div>
               <p className="text-sm leading-relaxed text-footer-foreground/60">
                 Simplifying the complex — system design, DevOps and AI, broken
@@ -96,8 +96,13 @@ export default function Footer() {
 
       {/* Oversized wordmark */}
       <div aria-hidden="true" className="relative overflow-hidden py-8">
-        <div className="select-none text-center text-[20vw] font-light leading-none text-footer-foreground/5">
-          ROHITDEV
+        {/* The size is tied to the character count: at 20vw, which fitted the
+            eight letters of the old name, ROHITTECH measured 1715px of glyphs
+            in a 1600px viewport and clipped mid-letter at both ends. 17.5vw
+            fills the same proportion nine letters wide. Because vw scales
+            linearly, one value holds at every width. */}
+        <div className="select-none text-center text-[17.5vw] font-light leading-none text-footer-foreground/5">
+          ROHITTECH
         </div>
       </div>
     </footer>

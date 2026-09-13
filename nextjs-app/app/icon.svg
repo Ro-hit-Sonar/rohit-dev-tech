@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>Rohittech</title>
+  <!--
+    A ring with a dot at its centre — the site's own vocabulary, from the hero's
+    concentric arcs to the dot that marks where you are in the community
+    journey.
+
+    The colour is set here rather than inherited: a favicon renders against the
+    browser's tab strip, not the page, so it has no theme to inherit from. The
+    media query is what stops a near-black mark from vanishing into a dark tab.
+  -->
+  <style>
+    :root { --ink: #1a1a1a; }
+    @media (prefers-color-scheme: dark) { :root { --ink: #fafafa; } }
+  </style>
+  <circle cx="16" cy="16" r="12.6" fill="none" stroke="var(--ink)" stroke-width="2.7" />
+  <circle cx="16" cy="16" r="4" fill="var(--ink)" />
+</svg>
