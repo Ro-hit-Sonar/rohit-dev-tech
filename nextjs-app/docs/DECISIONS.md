@@ -314,3 +314,46 @@ while the smooth scroll was still moving. A rAF-throttled `scroll` listener that
 heading from scratch is both simpler and provably correct: it cannot miss a resting position, and a
 dropped frame is harmless because nothing is accumulated. Reach for an observer when you care about
 *transitions*, not when you care about *current state*.
+
+### The community road is measured in JavaScript and drawn in CSS — 2026-09-06
+**Tier:** Architecture
+**Decision:** Built `/community` as a journey: a meandering line down the page through every event,
+drawing itself in as the reader travels, with a sticky gauge naming the date of the stop they are
+at. The line's **geometry** is computed in a client island — node centres measured from the DOM, a
+control point bowed sideways at each midpoint, a Catmull–Rom spline fitted through the result — but
+the **drawing** is a CSS scroll-driven animation. The path carries `pathLength="1"`, so
+`stroke-dashoffset` runs 1 → 0 in unit space with no `getTotalLength()` and no per-frame JavaScript.
+Events are a new `communityEvent` document type; a `kind` field (`core` / `attended`) sets how much
+weight an entry carries and **never renders as a label**.
+**Why:** The path has to pass through stops whose positions depend on how the copy wrapped and how
+tall each card turned out, so it cannot be hand-drawn or computed on the server — that part is
+genuinely a measurement problem. The *drawing* is not: it is a function of scroll position, which is
+exactly what `animation-timeline` exists for. Splitting it that way means the only JavaScript that
+runs per-frame on this page is the gauge's date.
+The range is derived rather than dialled in: `entry P%` puts the road's top edge at `(100 - P)%` down
+the viewport and `exit P%` puts its bottom edge there, so `entry 42%` draws in exact step with a
+reading line at 58% — the same line the gauge uses. Both halves are viewport-relative, so it holds at
+any window height. The first attempt used numbers picked by eye and left the reader two stops in
+before the line moved at all.
+**Alternatives considered:** The supplied prototype hid every card behind `opacity: 0` and undid it
+with a JS-added class — rejected outright, that is the exact failure mode this file already commits
+against, and with the script blocked the whole journey would be invisible. Cards reuse the existing
+`.scroll-rise` instead. A single roving highlight on the current stop (as the prototype does) —
+rejected: stops now light as you reach them and **stay** lit, which agrees with a line that is drawn
+cumulatively instead of contradicting it, and it needs no JavaScript at all. An IntersectionObserver
+for the gauge — rejected for the reason recorded in the post-page entry: it reports transitions, not
+resting state.
+**Concepts for the learner:** First, when something depends on layout, ask whether *all* of it does.
+Here "where are the stops" needed measurement and "how much is drawn" did not, and separating the two
+turned a scroll handler into a CSS declaration.
+Second, a typed union from the CMS is not the string you think it is. `sanityFetch` returns
+`StegaString<"core">`, not `"core"`, because Sanity encodes edit metadata into strings as invisible
+characters for the Presentation tool. `event.kind === "core"` type-errors — and had it merely been
+cast away, it would have been **false in draft mode**, quietly rendering every entry at the lighter
+weight while looking perfect on the published site. Compare through `stegaClean`, and clean the value
+before putting it in a `data-` attribute a CSS selector will match on.
+Third, a page's chrome has a budget. Adding "Community" made three nav links, which pushed the header
+21px past its container at 375px and put the wordmark against the first link. The bar already sheds
+weight as it tightens — the `.tech` suffix, then LinkedIn — so the fix was to continue that ladder
+rather than invent a new mechanism. At 320px it now fits without overflowing but with no breathing
+room; a real menu is the answer if that width ever matters.

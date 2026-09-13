@@ -1,5 +1,6 @@
 import {CogIcon} from '@sanity/icons/Cog'
 import {HomeIcon} from '@sanity/icons/Home'
+import {UsersIcon} from '@sanity/icons/Users'
 import type {StructureBuilder, StructureResolver} from 'sanity/structure'
 import pluralize from 'pluralize-esm'
 
@@ -9,7 +10,16 @@ import pluralize from 'pluralize-esm'
  * Learn more: https://www.sanity.io/docs/structure-builder-introduction
  */
 
-const DISABLED_TYPES = ['settings', 'homePage', 'assist.instruction.context']
+// `communityEvent` is pulled out of the auto-generated list so it can be
+// re-added below with an explicit newest-first ordering — the journey page
+// reads in that order, and a Studio list that disagrees with the page makes
+// re-ordering events needlessly confusing.
+const DISABLED_TYPES = [
+  'settings',
+  'homePage',
+  'communityEvent',
+  'assist.instruction.context',
+]
 
 export const structure: StructureResolver = (S: StructureBuilder) =>
   S.list()
@@ -22,6 +32,15 @@ export const structure: StructureResolver = (S: StructureBuilder) =>
         .map((listItem) => {
           return listItem.title(pluralize(listItem.getTitle() as string))
         }),
+      // Community Events, newest first — the order the /community page tells them in.
+      S.listItem()
+        .title('Community Events')
+        .icon(UsersIcon)
+        .child(
+          S.documentTypeList('communityEvent')
+            .title('Community Events')
+            .defaultOrdering([{field: 'date', direction: 'desc'}]),
+        ),
       // Home Page Singleton — content for the editable sections of the home page.
       S.listItem()
         .title('Home Page')

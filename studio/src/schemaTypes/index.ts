@@ -1,6 +1,7 @@
 import {person} from './documents/person'
 import {page} from './documents/page'
 import {post} from './documents/post'
+import {communityEvent} from './documents/communityEvent'
 import {callToAction} from './objects/callToAction'
 import {infoSection} from './objects/infoSection'
 import {settings} from './singletons/settings'
@@ -22,6 +23,7 @@ export const schemaTypes = [
   page,
   post,
   person,
+  communityEvent,
   // Objects
   blockContent,
   figuringOutSection,

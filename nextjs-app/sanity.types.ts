@@ -191,16 +191,26 @@ export type BlockContent = Array<{
   _key: string;
 }>;
 
-export type HomePage = {
+export type CommunityEvent = {
   _id: string;
-  _type: "homePage";
+  _type: "communityEvent";
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  figuringOut?: FiguringOutSection;
-  maintenant?: MaintenantSection;
-  featured?: FeaturedSection;
-  community?: CommunitySection;
+  title: string;
+  kind: "core" | "attended";
+  date: string;
+  venue?: string;
+  note?: string;
+  photos?: Array<{
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "photo";
+    _key: string;
+  }>;
 };
 
 export type SanityImageCrop = {
@@ -217,6 +227,18 @@ export type SanityImageHotspot = {
   y: number;
   height: number;
   width: number;
+};
+
+export type HomePage = {
+  _id: string;
+  _type: "homePage";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  figuringOut?: FiguringOutSection;
+  maintenant?: MaintenantSection;
+  featured?: FeaturedSection;
+  community?: CommunitySection;
 };
 
 export type Page = {
@@ -582,9 +604,10 @@ export type AllSanitySchemaTypes =
   | MaintenantSection
   | FiguringOutSection
   | BlockContent
-  | HomePage
+  | CommunityEvent
   | SanityImageCrop
   | SanityImageHotspot
+  | HomePage
   | Page
   | PersonReference
   | Post
@@ -1055,6 +1078,27 @@ export type BlogsIndexQueryResult = Array<{
   readingMinutes: number;
 }>;
 
+// Source: sanity/lib/queries.ts
+// Variable: communityEventsQuery
+// Query: *[_type == "communityEvent" && defined(date)] | order(date desc) {    _id,    title,    kind,    date,    venue,    note,    photos  }
+export type CommunityEventsQueryResult = Array<{
+  _id: string;
+  title: string;
+  kind: "attended" | "core";
+  date: string;
+  venue: string | null;
+  note: string | null;
+  photos: Array<{
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "photo";
+    _key: string;
+  }> | null;
+}>;
+
 // Query TypeMap
 import "@sanity/client";
 declare module "@sanity/client" {
@@ -1071,5 +1115,6 @@ declare module "@sanity/client" {
     '\n  *[_type == "post" && defined(slug.current)]\n  {"slug": slug.current}\n': PostPagesSlugsResult;
     '\n  *[_type == "page" && defined(slug.current)]\n  {"slug": slug.current}\n': PagesSlugsResult;
     '\n  *[_type == "post" && defined(slug.current)] | order(date desc, _updatedAt desc) {\n    _id,\n    "title": coalesce(title, "Untitled"),\n    "slug": slug.current,\n    category,\n    "date": coalesce(date, _updatedAt),\n    "readingMinutes": round(length(pt::text(content)) / 5 / 200)\n  }\n': BlogsIndexQueryResult;
+    '\n  *[_type == "communityEvent" && defined(date)] | order(date desc) {\n    _id,\n    title,\n    kind,\n    date,\n    venue,\n    note,\n    photos\n  }\n': CommunityEventsQueryResult;
   }
 }

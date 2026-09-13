@@ -6,6 +6,7 @@ import ThemeToggle from "@/app/components/ThemeToggle";
 const navLinks = [
   { href: "/about", label: "About" },
   { href: "/blogs", label: "Blogs" },
+  { href: "/community", label: "Community" },
 ];
 
 export default function Header() {
@@ -21,8 +22,12 @@ export default function Header() {
           <span className="hidden text-muted-foreground sm:inline">.tech</span>
         </Link>
 
-        <nav className="flex items-center gap-4 sm:gap-8">
-          <ul className="flex items-center gap-4 text-sm sm:gap-8">
+        <nav className="flex items-center gap-3 sm:gap-8">
+          {/* text-xs below sm: a third nav item pushed the bar 21px past its
+              container at 375, overlapping the wordmark. The bar sheds weight
+              as it tightens — the .tech suffix first, then LinkedIn, now the
+              label size and GitHub. */}
+          <ul className="flex items-center gap-3 text-xs sm:gap-8 sm:text-sm">
             {navLinks.map(({ href, label }) => (
               <li key={href}>
                 <Link
@@ -35,13 +40,13 @@ export default function Header() {
             ))}
           </ul>
 
-          <div className="flex items-center gap-2 border-l border-border pl-4 sm:gap-3 sm:pl-8">
+          <div className="flex items-center gap-2 sm:gap-3 sm:border-l sm:border-border sm:pl-8">
             <Link
               href="https://github.com/Ro-hit-Sonar"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub"
-              className="grid h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground"
+              className="hidden h-9 w-9 place-items-center rounded-full border border-border text-muted-foreground transition-colors hover:border-foreground hover:text-foreground sm:grid"
             >
               <Github className="h-4 w-4" />
             </Link>

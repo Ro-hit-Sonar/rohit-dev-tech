@@ -213,3 +213,19 @@ export const blogsIndexQuery = defineQuery(`
     "readingMinutes": round(length(pt::text(content)) / 5 / 200)
   }
 `);
+
+/**
+ * The community journey at /community, newest first — the order the page
+ * reads in, and the same order the Studio list uses.
+ */
+export const communityEventsQuery = defineQuery(`
+  *[_type == "communityEvent" && defined(date)] | order(date desc) {
+    _id,
+    title,
+    kind,
+    date,
+    venue,
+    note,
+    photos
+  }
+`);

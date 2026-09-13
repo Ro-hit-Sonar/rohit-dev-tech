@@ -1183,7 +1183,7 @@
     }
   },
   {
-    "name": "homePage",
+    "name": "communityEvent",
     "type": "document",
     "attributes": {
       "_id": {
@@ -1196,7 +1196,7 @@
         "type": "objectAttribute",
         "value": {
           "type": "string",
-          "value": "homePage"
+          "value": "communityEvent"
         }
       },
       "_createdAt": {
@@ -1217,35 +1217,116 @@
           "type": "string"
         }
       },
-      "figuringOut": {
+      "title": {
         "type": "objectAttribute",
         "value": {
-          "type": "inline",
-          "name": "figuringOutSection"
+          "type": "string"
+        },
+        "optional": false
+      },
+      "kind": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "union",
+          "of": [
+            {
+              "type": "string",
+              "value": "core"
+            },
+            {
+              "type": "string",
+              "value": "attended"
+            }
+          ]
+        },
+        "optional": false
+      },
+      "date": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        },
+        "optional": false
+      },
+      "venue": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
         },
         "optional": true
       },
-      "maintenant": {
+      "note": {
         "type": "objectAttribute",
         "value": {
-          "type": "inline",
-          "name": "maintenantSection"
+          "type": "string"
         },
         "optional": true
       },
-      "featured": {
+      "photos": {
         "type": "objectAttribute",
         "value": {
-          "type": "inline",
-          "name": "featuredSection"
-        },
-        "optional": true
-      },
-      "community": {
-        "type": "objectAttribute",
-        "value": {
-          "type": "inline",
-          "name": "communitySection"
+          "type": "array",
+          "of": {
+            "type": "object",
+            "attributes": {
+              "asset": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "inline",
+                  "name": "sanity.imageAsset.reference"
+                },
+                "optional": true
+              },
+              "media": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "unknown"
+                },
+                "optional": true
+              },
+              "hotspot": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "inline",
+                  "name": "sanity.imageHotspot"
+                },
+                "optional": true
+              },
+              "crop": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "inline",
+                  "name": "sanity.imageCrop"
+                },
+                "optional": true
+              },
+              "alt": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string"
+                },
+                "optional": true
+              },
+              "_type": {
+                "type": "objectAttribute",
+                "value": {
+                  "type": "string",
+                  "value": "photo"
+                }
+              }
+            },
+            "rest": {
+              "type": "object",
+              "attributes": {
+                "_key": {
+                  "type": "objectAttribute",
+                  "value": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
         },
         "optional": true
       }
@@ -1336,6 +1417,75 @@
           },
           "optional": false
         }
+      }
+    }
+  },
+  {
+    "name": "homePage",
+    "type": "document",
+    "attributes": {
+      "_id": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        }
+      },
+      "_type": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string",
+          "value": "homePage"
+        }
+      },
+      "_createdAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        }
+      },
+      "_updatedAt": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        }
+      },
+      "_rev": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "string"
+        }
+      },
+      "figuringOut": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "inline",
+          "name": "figuringOutSection"
+        },
+        "optional": true
+      },
+      "maintenant": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "inline",
+          "name": "maintenantSection"
+        },
+        "optional": true
+      },
+      "featured": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "inline",
+          "name": "featuredSection"
+        },
+        "optional": true
+      },
+      "community": {
+        "type": "objectAttribute",
+        "value": {
+          "type": "inline",
+          "name": "communitySection"
+        },
+        "optional": true
       }
     }
   },

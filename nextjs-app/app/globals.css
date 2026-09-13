@@ -286,6 +286,99 @@
       animation-timeline: --arc-scope;
       animation-range: entry 85% exit 15%;
     }
+
+    /* The community journey's line draws itself in as the reader travels.
+     *
+     * The geometry is measured from the DOM (the path has to pass through every
+     * node, whose position depends on how the content wrapped), but the DRAWING
+     * is pure CSS: the path carries pathLength="1", so the dash runs in unit
+     * space and needs no getTotalLength() and no per-frame JavaScript.
+     *
+     * Named on the road and referenced from the path, for the same reason the
+     * arc above is: a bare view() would measure the path's own pass through the
+     * viewport, and the path is far taller than the screen, so the range would
+     * never finish while the journey was still being read. */
+    .road-scope {
+      view-timeline-name: --road;
+    }
+
+    .road-past {
+      animation: road-draw linear both;
+      animation-timeline: --road;
+      /* The range is derived, not dialled in by eye.
+       *
+       * `entry P%` puts the road's top edge at (100 - P)% down the viewport, and
+       * `exit P%` puts its bottom edge there. So a range of `entry 42% exit 42%`
+       * draws in exact step with a reading line at 58% of the screen — the same
+       * line JourneyRoad uses to decide which date the gauge shows. Because both
+       * halves are viewport-relative, it holds at any window height.
+       *
+       * The exit end is pulled earlier than 42% because the road extends a little
+       * below the closing dot; without that the line would still be finishing
+       * after the reader could already see the end of it. */
+      animation-range: entry 42% exit 28%;
+    }
+
+    /* A stop lights as you reach it and STAYS lit, so the dots agree with the
+     * line: everything behind you is dark, everything ahead is a hairline. A
+     * single roving highlight would contradict a line that is drawn
+     * cumulatively.
+     *
+     * `both` is what makes it persist past the range — without it a stop would
+     * light up and then go dark again as it left the viewport.
+     *
+     * Two keyframes rather than one, because the two kinds of stop differ in
+     * WHICH property carries the change: a core stop is a filled disc, an
+     * attended one is a ring. Animating `background` on both would fade the
+     * hollow ones from grey-filled to empty on the way in. */
+    .journey-mark {
+      animation: journey-arrive-fill linear both;
+      animation-timeline: view();
+      animation-range: entry 65% cover 45%;
+    }
+
+    .journey-mark[data-kind="attended"] {
+      animation-name: journey-arrive-ring;
+    }
+  }
+}
+
+/* Arrived is the resting state, for the same reason the line rests drawn. */
+.journey-mark {
+  border-color: var(--foreground);
+  background: var(--foreground);
+}
+
+.journey-mark[data-kind="attended"] {
+  background: var(--background);
+}
+
+@keyframes journey-arrive-fill {
+  from {
+    background: var(--border);
+  }
+}
+
+@keyframes journey-arrive-ring {
+  from {
+    border-color: var(--border);
+  }
+}
+
+/* The drawn state is the RESTING state. Without scroll-driven animation, or
+ * with reduced motion, the line is simply complete — the half-drawn version
+ * only ever exists inside the guard above. */
+.road-past {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+}
+
+@keyframes road-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
   }
 }
 
