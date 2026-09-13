@@ -357,3 +357,40 @@ Third, a page's chrome has a budget. Adding "Community" made three nav links, wh
 weight as it tightens — the `.tech` suffix, then LinkedIn — so the fix was to continue that ladder
 rather than invent a new mechanism. At 320px it now fits without overflowing but with no breathing
 room; a real menu is the answer if that width ever matters.
+
+### The figuring-out statement became rich text — 2026-09-13
+**Tier:** Pattern
+**Decision:** Rebuilt the copy side of "What I'm figuring out". `leadLines` went from an array of
+plain strings to restricted Portable Text carrying a single custom `hollow` decorator, so one word —
+"answers", in a sentence about not having them — can be drawn as an outline from the Studio. The
+lines now share one left edge instead of stepping right, and the body sits under the statement. The
+arc on the right is unchanged.
+**Why:** The section needed the emphasis to live *inside* a line, and a plain string array has no way
+to express that. The alternatives were worse in the ways this file already records elsewhere: a
+sibling `hollowWord` field splits one sentence across two inputs with nothing keeping them in sync,
+which is the argument made under the `reveal` annotation; and a marker convention like `*answers*`
+puts magic syntax in a field that gives the editor no hint it exists.
+The staircase indent went because it was `index * 2.5rem` with no responsive clamp — a third line
+would have been indented 5rem inside a 24px gutter on a phone.
+**Honest note on how this landed:** the first attempt also replaced the arc with four drifting rings,
+and moved the section onto the page ground with hairlines. Both were reverted after seeing them
+rendered — the rings on the argument that a closing circle contradicts a statement about not having
+answers, which read better in prose than on the page, and the ground because it broke a rhythm the
+neighbouring sections had already established. What survived is the part that was about the content
+rather than the decoration.
+**Concepts for the learner:** First, changing a Sanity field's *type* invalidates the content already
+in it. `leadLines` going from `array of string` to `array of block` meant the two existing strings had
+to be converted in the same pass — schema and data move together, or the Studio shows a broken field.
+The migration also did work the schema alone could not: it re-split one line into two and attached the
+hollow mark.
+Second, deleting a component is rarely just deleting a file. When the rings briefly replaced the arc,
+`OpenArc` turned out to be the only thing keeping `@property --arc-close`, `.spin-in-place`, three
+drift animations, `.scroll-arc*`, `.scroll-line` and `--line-opacity` alive — about 40 lines across
+five separate places in globals.css. Grep each identifier before removing it: `.scroll-rise` looked
+like part of the same family and would have taken the community journey's cards down with it. That
+lesson survived the revert; `.scroll-line` and `--line-opacity` are still gone, because the new
+statement genuinely does not use them.
+Third, and the reason this entry reads the way it does: a decision log is only worth keeping if it
+describes what shipped. Two paragraphs here originally argued that the arc was wrong and the rings
+were right. Leaving that in place next to code that does the opposite would make every other entry
+less trustworthy.

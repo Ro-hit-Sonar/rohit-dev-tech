@@ -1,6 +1,3 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-
 /* Registered so it can be animated. An unregistered custom property is a string
  * to the engine and will not interpolate — the arc would snap, not close. */
 @property --arc-close {
@@ -8,6 +5,9 @@
   inherits: true;
   initial-value: 1;
 }
+
+@import "tailwindcss";
+@import "tw-animate-css";
 
 @plugin "@tailwindcss/typography";
 
@@ -122,8 +122,6 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --shadow-layer: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
-
   /* The open-arc graphic. Slow enough to read as drift rather than spin; the
      alternating directions keep the gaps from ever lining up. */
   --animate-drift: drift 54s linear infinite;
@@ -141,6 +139,8 @@
       transform: rotate(-360deg);
     }
   }
+
+  --shadow-layer: 0 35px 60px -15px rgba(0, 0, 0, 0.3);
 }
 
 /* ---------------------------------------------------------------------------
@@ -258,13 +258,6 @@
  * ------------------------------------------------------------------------ */
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
-    /* A line of the display statement: rises and brightens as it enters. */
-    .scroll-line {
-      animation: scroll-line-in linear both;
-      animation-timeline: view();
-      animation-range: entry 10% cover 32%;
-    }
-
     /* Supporting prose: the same move, smaller. */
     .scroll-rise {
       animation: scroll-rise-in linear both;
@@ -382,14 +375,6 @@
   }
 }
 
-/* Each line carries its own resting opacity so the statement brightens toward
- * its final line. The keyframe has to land on that value rather than a flat 1,
- * or `animation-fill-mode: both` would overwrite the gradient it is meant to
- * arrive at. */
-.scroll-line {
-  opacity: var(--line-opacity, 1);
-}
-
 /* ---------------------------------------------------------------------------
  * The community collage strip.
  *
@@ -479,6 +464,33 @@
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * The hollow word.
+ *
+ * One word of the figuring-out statement, drawn as an outline instead of filled
+ * — the word the sentence is about not having.
+ *
+ * Same shape as `.numeral-outline` above, including the trap: the stroke colour
+ * must be EXPLICIT. `currentColor` resolves against this element's own `color`,
+ * which is transparent here, so the stroke would be transparent too and the word
+ * would vanish rather than read as an outline.
+ * ------------------------------------------------------------------------ */
+.hollow-word {
+  color: transparent;
+}
+
+@supports not (-webkit-text-stroke: 1px currentColor) {
+  .hollow-word {
+    color: var(--muted-foreground);
+  }
+}
+
+@supports (-webkit-text-stroke: 1px currentColor) {
+  .hollow-word {
+    -webkit-text-stroke: 1.5px var(--muted-foreground);
+  }
+}
+
 @keyframes numeral-fill-in {
   from {
     opacity: 0;
@@ -488,14 +500,12 @@
   }
 }
 
-@keyframes scroll-line-in {
+@keyframes scroll-arc-close {
   from {
-    opacity: calc(var(--line-opacity, 1) * 0.14);
-    transform: translateY(0.4em);
+    --arc-close: 0;
   }
   to {
-    opacity: var(--line-opacity, 1);
-    transform: translateY(0);
+    --arc-close: 1;
   }
 }
 
@@ -507,15 +517,6 @@
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes scroll-arc-close {
-  from {
-    --arc-close: 0;
-  }
-  to {
-    --arc-close: 1;
   }
 }
 

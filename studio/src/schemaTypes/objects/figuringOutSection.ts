@@ -29,9 +29,22 @@ export const figuringOutSection = defineType({
       name: 'leadLines',
       title: 'Statement',
       description:
-        'The display-size statement, one line per entry. Each line arrives in sequence and lands brighter than the last, so put the turn of the sentence on its own line.',
+        'The display-size statement, one line per block — break the sentence where you want it to break on screen. Select a word and press Hollow to draw it as an outline instead of solid; the section uses that on "answers", because the statement is about not having them. The first line is set quieter than the rest automatically.',
       type: 'array',
-      of: [defineArrayMember({type: 'string'})],
+      of: [
+        defineArrayMember({
+          type: 'block',
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
+          marks: {
+            // One decorator, deliberately. Bold or italic inside display type
+            // this large reads as a mistake rather than as emphasis, and this
+            // field exists to say exactly one thing.
+            decorators: [{title: 'Hollow', value: 'hollow'}],
+            annotations: [],
+          },
+        }),
+      ],
       validation: (Rule) => Rule.max(4),
     }),
     defineField({

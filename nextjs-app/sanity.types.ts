@@ -143,7 +143,20 @@ export type MaintenantSection = {
 export type FiguringOutSection = {
   _type: "figuringOutSection";
   heading: string;
-  leadLines?: Array<string>;
+  leadLines?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal";
+    listItem?: never;
+    markDefs?: null;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
   body?: Array<{
     children?: Array<{
       marks?: Array<string>;
@@ -741,7 +754,20 @@ export type HomePageQueryResult = {
   _type: "homePage";
   figuringOut: {
     heading: string;
-    leadLines: Array<string> | null;
+    leadLines: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "normal";
+      listItem?: never;
+      markDefs?: null;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }> | null;
     body: Array<{
       children?: Array<{
         marks?: Array<string>;
