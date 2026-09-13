@@ -11,19 +11,19 @@ type Topic = {
 
 const topics: Topic[] = [
   {
-    label: "System Design",
+    label: "SOFTWARE",
     description:
-      "Architecture and patterns, explained from first principles rather than folklore.",
+      "Building full-stack products and the systems that make them work.",
   },
   {
-    label: "DevOps",
+    label: "ARTIFICIAL INTELLIGENCE",
     description:
-      "CI/CD, infrastructure and the unglamorous plumbing that keeps software shipping.",
+      "Exploring how intelligent systems can become part of the things we build.",
   },
   {
-    label: "AI & ML",
+    label: "IDEAS",
     description:
-      "What the models actually do, minus the hype and minus the hand-waving.",
+      "Following interesting questions, trying things out, and seeing where they lead.",
   },
 ];
 
@@ -94,7 +94,7 @@ export default function CircleHero() {
           {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
             <h1 className="mb-4 text-balance text-xl font-light tracking-wide text-foreground md:text-2xl">
-              Complex systems, made simple.
+              What’s worth building?
             </h1>
             <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
               Scroll to explore
@@ -103,9 +103,24 @@ export default function CircleHero() {
 
           {/* Connector labels — anchored to the max-w-6xl wrapper, not the
               circle, so they can never push the page into horizontal scroll. */}
-          <ConnectorLine topic={topics[0]} position="right" offset="top-[14%]" active={active} />
-          <ConnectorLine topic={topics[1]} position="left" offset="top-[42%]" active={active} />
-          <ConnectorLine topic={topics[2]} position="right" offset="bottom-[12%]" active={active} />
+          <ConnectorLine
+            topic={topics[0]}
+            position="right"
+            offset="top-[14%]"
+            active={active}
+          />
+          <ConnectorLine
+            topic={topics[1]}
+            position="left"
+            offset="top-[42%]"
+            active={active}
+          />
+          <ConnectorLine
+            topic={topics[2]}
+            position="right"
+            offset="bottom-[12%]"
+            active={active}
+          />
         </div>
 
         {/* Below xl the connectors are hidden; the same content reads as a
@@ -161,7 +176,9 @@ function ConnectorLine({
       className={[
         "absolute hidden w-[248px] items-start transition-opacity duration-500 xl:flex",
         offset,
-        isLeft ? "right-[calc(100%+2rem)] flex-row-reverse text-right" : "left-[calc(100%+2rem)]",
+        isLeft
+          ? "right-[calc(100%+2rem)] flex-row-reverse text-right"
+          : "left-[calc(100%+2rem)]",
       ].join(" ")}
       style={{ opacity: active ? 1 : 0.7 }}
     >
