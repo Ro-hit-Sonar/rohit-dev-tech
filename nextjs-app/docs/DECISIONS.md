@@ -441,3 +441,44 @@ Third, placeholder content hides a whole class of defect. Every body in this sec
 line until real copy arrived, and a missing paragraph margin is invisible until something has two
 paragraphs. When seeding a CMS field, make at least one fixture the awkward shape — several
 paragraphs, a very long title, an empty optional — or the first real content becomes the test.
+
+### The footer wordmark is a hole in a plate, not a masked video — 2026-10-01
+**Tier:** Pattern
+**Decision:** The footer ends with `rohittech.in` at full width with footage running inside the
+letters. The video is not masked. An SVG plate the exact colour of the footer ground sits *over* it
+with the wordmark cut out, so the glyphs are the only place the footage reaches. The cutting is
+done by an SVG `<mask>` inside the same `<svg>` as the plate, and the `<video>` is a client island
+that withholds its `src` until an IntersectionObserver says the band is close.
+**Why:** Three constraints picked this shape, and each one ruled out the more obvious option.
+The usual trick for video-in-text is `mix-blend-mode` over a solid ground. That needs the ground to
+be pure black or pure white, and this footer is `oklch(0.15 0 0)` in light and `oklch(0.11 0 0)` in
+dark — so any video pixel brighter than the slab would have bled through *outside* the letters. The
+next option, CSS `mask-image: url(#id)` pointing at an inline SVG mask, is the one Safari has
+historically got wrong. Masking inside the SVG has neither problem, and has the side benefit that
+the video element stays an ordinary box that knows nothing about the effect.
+The geometry is measured, not dialled in. Geist 300 renders `rohittech.in` as 493.64 of advance
+over 72.2 of ink, so that is the viewBox, and the container carries the same ratio as an
+`aspect-ratio` so the plate lands edge to edge. The plate rects are drawn larger than the viewBox
+anyway: if the two ever disagree, `meet` letterboxes the drawing, and a rect sized to the viewBox
+would leave raw video showing in the bars.
+**Honest note on the asset:** the supplied file could not ship. It was HEVC, which plays only in
+Safari, so in Chrome and Firefox the letters would have been empty — the feature would have looked
+finished to whoever tested it on a Mac and been invisible to most visitors. It was also 23MB at
+9.3 Mbps with an audio track a muted loop has no use for.
+**Concepts for the learner:** First, an asset's *format* is part of whether a feature works, not a
+detail to optimise afterwards. Check the codec before building anything on top of a media file;
+`ffprobe` answers it in one command, and "it plays on my machine" answers nothing.
+Second, contrast applies to video too. The footage bottomed out at luma 0 while the footer ground
+sits at 11/255, which meant the darkest parts of the letters were *darker than the plate around
+them* and dissolved into it. Lifting the black floor to 18 fixed it — and made the file smaller
+(1.91MB to 1.61MB), because encoding deep-shadow noise had been costing real bitrate. Measuring
+`signalstats` beat staring at the screenshot, which only suggested some letters looked "a bit
+faint".
+Third, `preload="none"` does not survive `autoplay`. Measured on /blogs, the browser pulled all
+1.65MB at 388ms with the band 1631px below the fold, on every route, because the footer lives in
+the root layout. Withholding `src` until an observer fires is the only thing that actually defers
+it. The rule this follows is the same one the scroll sections follow: the wordmark itself is in the
+server HTML — mask, text, plate and poster still — so it is complete on first paint and correct
+without JavaScript. Only the movement waits. A pleasant consequence is that under
+`prefers-reduced-motion` the element is `display: none`, never intersects, and the video is never
+requested at all: the reader who asked for less motion also stops paying for it.

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import FooterMarkVideo from "@/app/components/FooterMarkVideo";
+
 const linkColumns = [
   {
     title: "Site",
@@ -94,15 +96,57 @@ export default function Footer() {
         </div>
       </div>
 
-      {/* Oversized wordmark */}
-      <div aria-hidden="true" className="relative overflow-hidden py-8">
-        {/* The size is tied to the character count: at 20vw, which fitted the
-            eight letters of the old name, ROHITTECH measured 1715px of glyphs
-            in a 1600px viewport and clipped mid-letter at both ends. 17.5vw
-            fills the same proportion nine letters wide. Because vw scales
-            linearly, one value holds at every width. */}
-        <div className="select-none text-center text-[17.5vw] font-light leading-none text-footer-foreground/5">
-          ROHITTECH
+      {/* Oversized wordmark, with the footage showing through the letters */}
+      <div className="border-t border-footer-foreground/10 px-6 pb-10 pt-12 sm:pb-14 sm:pt-16">
+        {/* Decorative: the site's name is already readable as text in the
+            column above, so announcing these glyphs again would only repeat
+            it. */}
+        <div
+          aria-hidden="true"
+          className="footer-mark mx-auto w-full max-w-6xl"
+        >
+          <FooterMarkVideo />
+
+          {/* `text-footer` — the plate is the GROUND colour, not the type
+              colour. It is the sheet the wordmark is cut out of, and the only
+              thing behind the cut is the video. */}
+          <svg
+            className="footer-mark__plate text-footer"
+            viewBox="0 0 493.64 72.2"
+            focusable="false"
+          >
+            <defs>
+              <mask id="footer-wordmark-knockout">
+                {/* White keeps the plate, black removes it. So the wordmark is
+                    the hole. */}
+                <rect x="-100" y="-100" width="700" height="300" fill="#fff" />
+                {/* font-size 100 is not arbitrary: the viewBox is in the units
+                    this string was measured in, where 100px of Geist 300 gives
+                    72.2 of ink, and 71 of that sits above the baseline.
+                    textLength pins the advance so the band does not resize when
+                    the webfont swaps in over the fallback. */}
+                <text
+                  x="0"
+                  y="71"
+                  fontSize="100"
+                  fontWeight="300"
+                  textLength="493.64"
+                  lengthAdjust="spacingAndGlyphs"
+                  fill="#000"
+                >
+                  rohittech.in
+                </text>
+              </mask>
+            </defs>
+            <rect
+              x="-100"
+              y="-100"
+              width="700"
+              height="300"
+              fill="currentColor"
+              mask="url(#footer-wordmark-knockout)"
+            />
+          </svg>
         </div>
       </div>
     </footer>

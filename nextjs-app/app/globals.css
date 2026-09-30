@@ -555,3 +555,61 @@
     scroll-behavior: smooth;
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Footer wordmark — video seen through the letters.
+ *
+ * The video is not masked. A plate the colour of the footer ground sits ON TOP
+ * of it with the wordmark cut out, so the glyphs are the only place the footage
+ * shows. The cutting happens inside the SVG, where masking is universally
+ * supported; CSS `mask-image: url(#id)` pointing at an inline SVG mask is the
+ * obvious alternative and is the one Safari has historically got wrong.
+ *
+ * The plate must cover every pixel of the band. Its rects are deliberately
+ * larger than the viewBox for that reason — if the container's aspect ever
+ * drifts from the viewBox's, `meet` letterboxes the diagram and a bare rect
+ * would leave raw video showing in the bars.
+ * ------------------------------------------------------------------------ */
+.footer-mark {
+  position: relative;
+  /* Matches the SVG viewBox exactly, so the plate lands edge to edge. The
+   * numbers are Geist 300's own metrics for this string, measured rather than
+   * guessed: 493.64 advance over 72.2 of ink. Changing the wordmark, the weight
+   * or the typeface means re-measuring all three. */
+  aspect-ratio: 493.64 / 72.2;
+  overflow: hidden;
+  /* The poster is the resting state: it shows before the video has loaded, if
+   * it never loads, and whenever motion is not wanted. */
+  background-image: url("/footer-wordmark-poster.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+/* Motion is opt-in, as everywhere else here. Hiding the video rather than
+ * pausing it keeps this in CSS — there is no JavaScript in this component. */
+.footer-mark__video {
+  position: absolute;
+  inset: 0;
+  display: none;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .footer-mark__video {
+    display: block;
+  }
+}
+
+/* Positioned, and later in the DOM than the video, so it paints over it. */
+.footer-mark__plate {
+  position: relative;
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
+.footer-mark__plate text {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
