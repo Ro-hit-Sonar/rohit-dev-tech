@@ -398,9 +398,10 @@ less trustworthy.
 ### Where the deployed Studio actually lives, and what `.next` was hiding — 2026-09-30
 **Tier:** Pattern
 **Decision:** Three fixes that only look unrelated, because all three presented as "the Maintenant
-section is broken". The hosted Studio is redeployed with `sanity deploy --url rohitdevtech`, because
-its hostname lives on Sanity's side and not in `studio/.env`. Local content staleness is cleared
-with `rm -rf .next`, not `rm -rf .next/cache`. And `Maintenant`'s Portable Text `normal` serializer
+section is broken". The hosted Studio's identity is pinned in `studio/sanity.cli.ts` as
+`deployment.appId`, so `npm run deploy` reaches the Studio that already exists instead of claiming
+none is configured. Local content staleness is cleared with `rm -rf .next`, not
+`rm -rf .next/cache`. And `Maintenant`'s Portable Text `normal` serializer
 now carries `mt-6 first:mt-0`, so a body with more than one paragraph actually has gaps between
 them.
 **Why:** The Studio kept reporting *"Item of type `block` not valid for this list"* long after
@@ -427,7 +428,9 @@ would have answered it.
 and `--url` are only ways of *addressing* a deployed app — none of them is the record of what
 exists. When a CLI and your config disagree, ask the API which one is describing reality, and
 prefer `--dry-run` over inferring what a command will do. A dry run that prints its target is worth
-more than any amount of reasoning about it.
+more than any amount of reasoning about it. Once you have learned such an identifier the expensive
+way, write it into tracked config rather than leaving it in a flag someone has to remember: `appId`
+in `sanity.cli.ts` is version-controlled, which an env var in a gitignored file never is.
 Second, "the CMS shows new content but the site doesn't" is three different bugs wearing the same
 costume: unpublished drafts, a stale CDN, or a stale framework cache. Distinguish them by querying
 each layer separately rather than guessing — here the drafts perspective, then `useCdn: true`
