@@ -394,3 +394,47 @@ Third, and the reason this entry reads the way it does: a decision log is only w
 describes what shipped. Two paragraphs here originally argued that the arc was wrong and the rings
 were right. Leaving that in place next to code that does the opposite would make every other entry
 less trustworthy.
+
+### Where the deployed Studio actually lives, and what `.next` was hiding — 2026-09-30
+**Tier:** Pattern
+**Decision:** Three fixes that only look unrelated, because all three presented as "the Maintenant
+section is broken". The hosted Studio is redeployed with `sanity deploy --url rohitdevtech`, because
+its hostname lives on Sanity's side and not in `studio/.env`. Local content staleness is cleared
+with `rm -rf .next`, not `rm -rf .next/cache`. And `Maintenant`'s Portable Text `normal` serializer
+now carries `mt-6 first:mt-0`, so a body with more than one paragraph actually has gaps between
+them.
+**Why:** The Studio kept reporting *"Item of type `block` not valid for this list"* long after
+`leadLines` became rich text, because the deployed bundle was from 2026-09-06 and predated the
+schema change. `sanity deploy` refused to run, claiming no studio hostname was configured, and
+`SANITY_STUDIO_STUDIO_HOST` in `studio/.env` was indeed empty. That empty value was a red herring:
+querying `/v2024-08-01/user-applications?projectId=owol5nwb` shows exactly one app,
+`nthc0t4wnmk4c791z66r00vo`, already carrying `appHost: rohitdevtech`. The host had existed
+server-side for over a year. Passing it with `--url` targets that app; it does not create a second
+one, which `--dry-run` states in as many words — *"Deploys to existing studio"*.
+The paragraph margin was missing because the serializer emitted a bare `<p>`. Spacing lives on the
+paragraph rather than as a `space-y` on the wrapper so that it survives whatever lays the body out,
+which is the same pattern already used in `app/posts/[slug]/PostBody.tsx`.
+**Honest note on how this landed:** two of these cost far more time than the fixes are worth, both
+through the same error — trusting an inference over a measurement. Earlier in the project a masking
+script rendered that env line as `SANITY_STUDIO_STUDIO_HOST="" #########`, and I read the masked
+`#Optional` *comment* as a hostname that had been typed outside the quotes, then "fixed" it by
+quoting it in. The next deploy tried to create `https://#Optional.sanity.studio`. The masking had
+hidden the one character — the leading `#` — that identified what it was. On the back of that I
+also told Rohit that deploying would create a second Studio, which was wrong, and which delayed the
+actual fix by a day. Nothing about the situation was ambiguous; I just never ran the query that
+would have answered it.
+**Concepts for the learner:** First, deployment state is server state. `studio/.env`, `sanity.cli.ts`
+and `--url` are only ways of *addressing* a deployed app — none of them is the record of what
+exists. When a CLI and your config disagree, ask the API which one is describing reality, and
+prefer `--dry-run` over inferring what a command will do. A dry run that prints its target is worth
+more than any amount of reasoning about it.
+Second, "the CMS shows new content but the site doesn't" is three different bugs wearing the same
+costume: unpublished drafts, a stale CDN, or a stale framework cache. Distinguish them by querying
+each layer separately rather than guessing — here the drafts perspective, then `useCdn: true`
+against `useCdn: false`. Both returned the new copy, which ruled out Sanity entirely and pointed at
+Next. Worth knowing that `.next/cache` is not the whole cache: the fetch results survived deleting
+it and only cleared when the full `.next` went.
+Third, placeholder content hides a whole class of defect. Every body in this section was a single
+line until real copy arrived, and a missing paragraph margin is invisible until something has two
+paragraphs. When seeding a CMS field, make at least one fixture the awkward shape — several
+paragraphs, a very long title, an empty optional — or the first real content becomes the test.

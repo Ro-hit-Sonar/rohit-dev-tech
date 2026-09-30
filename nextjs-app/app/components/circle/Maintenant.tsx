@@ -25,8 +25,13 @@ type Reveal = {
 
 const components: PortableTextComponents = {
   block: {
+    // `mt-6 first:mt-0` rather than a `space-y` on the wrapper: the spacing
+    // belongs to the paragraph, so it survives whatever lays the body out.
+    // Without it, an item with more than one paragraph runs them together with
+    // no gap at all — which stayed invisible for as long as every body here was
+    // a single line of placeholder copy.
     normal: ({ children }) => (
-      <p className="text-pretty text-lg font-light leading-relaxed text-foreground sm:text-xl">
+      <p className="mt-6 text-pretty text-lg font-light leading-relaxed text-foreground first:mt-0 sm:text-xl">
         {children}
       </p>
     ),
