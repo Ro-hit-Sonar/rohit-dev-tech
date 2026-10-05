@@ -1,5 +1,130 @@
 # Decisions
 
+### Scroll-scored sections with CSS scroll-driven animations — 2026-08-30
+**Tier:** Architecture
+**Decision:** Rebuilt the "Figuring out" and "Maintenant" sections around the *shape* of their copy,
+and drove the reveals with **CSS scroll-driven animations** (`animation-timeline`) rather than a
+JavaScript scroll library. Only the Maintenant word-swap is a client island; the lead-line reveal,
+the supporting prose, and the arc closing are pure CSS. No animation dependency was added.
+**Why:** The sections were not short of animation, they were short of hierarchy — measured, the
+largest type anywhere on the homepage was 36px, so nothing could announce itself. The fix was
+structural: split `leadLines` out of the body so the thesis could be set at 72px, store Maintenant's
+shared stem once (`"Something currently being"`) so the anaphora becomes the mechanic instead of
+three repeated row-headings, and delete the `01/02` markers that were imposing list semantics on
+prose that is not a list.
+For the motion, CSS won on accessibility rather than on bundle size. With `animation-timeline` the
+"not yet revealed" state exists *only* inside `@supports (animation-timeline: view()) and
+(prefers-reduced-motion: no-preference)`. Everywhere else the element renders finished. There is no
+moment where content sits at `opacity: 0` waiting for a script — which is exactly the failure mode a
+JS reveal library introduces when its bundle fails to load.
+**Alternatives considered:** framer-motion or GSAP ScrollTrigger — rejected: the repo has 18 runtime
+deps and hand-rolls every existing interaction, so the dependency would have been a bigger change
+than the feature. Pinned/scroll-jacked sections — rejected by the user; `position: sticky` gives the
+held stem without ever taking over the scrollbar. A CSS-only word swap using a clipped translated
+stack — rejected because in a browser without scroll timelines it would hide two of the three words
+entirely; that one effect earns its client island.
+**Concepts for the learner:** Two traps cost real debugging time here, both worth knowing.
+*First*, `animation-timeline: view()` resolves against the **nearest scroll container**, and
+`overflow: hidden` silently creates one. The section clipped its bleeding arc with `overflow-hidden`,
+which made the arc's progress freeze at a constant — it never closed. `overflow: clip` clips without
+establishing a scroll container, and fixed it. Related: a bare `view()` measures *the animated
+element's own* pass through the viewport, so a near-viewport-height graphic never completes its range
+while its section is still being read — naming a `view-timeline-name` on the section and referencing
+it from the child is what ties the animation to the thing the reader is actually moving through.
+*Second*, `animation-fill-mode: both` holds the keyframe's final value, which will overwrite an
+inline style. Each lead line carries its own resting opacity so the statement brightens toward its
+last line; the keyframe had to end on `var(--line-opacity)` rather than a flat `1`, or the animation
+would flatten the gradient it was supposed to arrive at. And a custom property only interpolates if
+it is registered with `@property` — an unregistered one is just a string to the engine, so the arc
+would have snapped rather than closed.
+
+### The "reveal" is a Portable Text annotation, not a field — 2026-08-30
+**Tier:** Pattern
+**Decision:** The Maintenant section's inline reveal — the span of body text that is the *answer*,
+dotted-underlined, linking to a post and showing that post's cover image on hover — is authored as a
+custom Portable Text annotation (`reveal`) carrying a reference to a `post`. It is exported as a
+plain object literal from `studio/src/schemaTypes/objects/revealAnnotation.ts`, mirroring
+`portableTextLinkAnnotation`, so it can be inlined into any `marks.annotations` array without being
+registered as a top-level schema type.
+**Why:** The alternative was a sibling field — `body` plus `answer` plus `answerPost`. That splits
+one sentence across three inputs, and nothing keeps them in sync: change the wording of the sentence
+and the `answer` string silently stops matching anything in it. As an annotation the answer *is* the
+selection, so it can be one word or a whole clause, it can sit anywhere in the sentence, and it
+cannot drift. Both the href and the thumbnail derive from the referenced post, so renaming or
+re-imaging that post keeps this section correct with no edit here.
+**Alternatives considered:** A separate `answer` string field — rejected for the drift above.
+Reusing the existing `link` annotation — rejected because a plain link and a reveal need different
+rendering, and `_type` is what the serializer discriminates on. Extending the shared `linkReference`
+GROQ fragment to dereference the post into an object — rejected outright: `linkResolver` guards on
+`typeof link.post === "string"`, so widening that projection would have made *every existing post
+link on the site* silently degrade to unlinked text. `reveal` got its own flat fragment instead.
+**Concept for the learner:** Portable Text stores marks out-of-band. The `children` spans hold the
+text and a `marks: [key]` array; the actual annotation data lives in the block's `markDefs`, matched
+by `_key`. That indirection is why an annotation can wrap any arbitrary selection and survive the
+text around it being rewritten — and it is also why the GROQ has to re-project `markDefs[]`
+explicitly to resolve references, since a plain `...` returns the raw `_ref` and nothing else.
+Relatedly, when a serializer must hand data to a client component, resolve it on the server first:
+here the server builds the Sanity image URL and `RevealLink` receives only strings, which is what
+keeps the section a server component with one small client island inside it.
+
+### A `homePage` singleton, not a page-builder block — 2026-08-30
+**Tier:** Architecture
+**Decision:** Added a `homePage` singleton document (pinned in the desk structure, hidden from the
+document-type list via `DISABLED_TYPES`) holding a `figuringOutSection` object. The section's `body`
+is Portable Text with `styles` pinned to `normal` and `lists: []`, reusing the `link` annotation now
+exported from `objects/blockContent.tsx` as `portableTextLinkAnnotation`.
+**Why:** The home page is hardcoded — `app/page.tsx` composes `CircleHero`, `FiguringOut` and
+`CircleFeatures` directly rather than mapping over a `pageBuilder` array. Making this a page-builder
+block would have made it placeable on `/[slug]` pages while still needing separate wiring for the one
+page it actually appears on. A singleton also gives the remaining hardcoded sections somewhere to
+migrate to later without another schema decision.
+The `body` restriction matters more than it looks. The shared `blockContent` type leaves `styles` and
+`lists` unspecified, so Sanity applies its defaults and hands editors H1–H6, blockquotes and lists.
+This section renders every paragraph through a serializer that prefixes it with a number and a
+marker, so a heading or a bullet list would render with an `03` beside it and break the layout.
+Restricting the field is what keeps the design and the CMS from fighting.
+**Alternatives considered:** A dedicated `figuringOut` singleton — rejected as one pinned sidebar
+item per homepage section, which does not scale. Reusing `blockContent` and filtering unwanted styles
+at render time — rejected: it lets an editor produce content the site silently discards, which is
+worse than not offering it. An array of plain strings — rejected, it removes bold and links from body
+copy entirely.
+**Concept for the learner:** In Sanity, *what the schema allows* is the real contract, not what the
+frontend happens to render. Portable Text `block` members are permissive by default — omitting
+`styles`/`lists` is not "no styles", it is "all the built-in ones". Any field whose output has a
+fixed visual shape should have that shape enforced in the schema, because the editor UI is the only
+place the constraint is visible to the person writing the content.
+
+### Adopt the circle design system; Tailwind v3 -> v4 to do it — 2026-08-30
+**Tier:** Architecture
+**Decision:** Migrated `nextjs-app` from Tailwind v3 (JS config) to Tailwind v4 (CSS-first
+`@theme` in `app/globals.css`), adopted the oklch neutral token set from the `circle-page-elements`
+v0 export as the site-wide palette, wired `next-themes` for light + dark, and replaced the
+homepage with the concentric-circle hero. `tailwind.config.ts` and `postcss.config.js` are gone;
+`circle-page-elements/` was deleted after porting.
+**Why:** The circle CSS is authored against v4 primitives that have no v3 equivalent —
+`@import "tailwindcss"`, `@theme inline`, `@custom-variant dark`, and `tw-animate-css`. Backporting
+it would have meant hand-rewriting the token layer *and* giving up opacity modifiers on the token
+colours: v3 resolves `bg-primary/60` by substituting `<alpha-value>` into a channel-split custom
+property, which an `oklch(...)` value cannot supply. The ported components lean on `/60`, `/40`,
+`/10` and `/5` throughout, so that loss was not cosmetic. The v3 config was small enough (six colour
+ramps, one shadow, one font family, the typography plugin) that porting it forward was the smaller
+job.
+**Alternatives considered:** Staying on v3 and expressing the tokens as HSL channel triples —
+rejected as a rewrite of the design source that would drift from it on every future v0 export.
+Repointing `--primary` at the brand red — rejected: the footer renders a `bg-primary` slab, and a
+full-width red slab is not the design. Red became a separate `--brand` accent instead. Letting the
+footer use `--primary` so it inverts with the theme — rejected after looking at it: a near-white
+slab at the bottom of a dark page reads as glare, so the footer got its own `--footer` /
+`--footer-foreground` pair that stays dark in both themes.
+**Concept for the learner:** Tailwind v4 moves configuration out of JavaScript and into CSS custom
+properties, which means the *design tokens are now real CSS variables at runtime* rather than
+build-time constants. That is what makes `.dark { --background: ... }` work with no rebuild and no
+`dark:` variant on every element — you restyle by swapping variable values on an ancestor, and
+every utility that references them follows. The corollary is that `@theme` and `@theme inline`
+differ: plain `@theme` emits the variable, `@theme inline` substitutes the value at use site, which
+is why the semantic tokens (which must stay live for theming) are declared in `:root`/`.dark` and
+only *mapped* through `@theme inline`.
+
 ### Split eslint majors across workspaces (studio 10, nextjs-app 9) — 2026-08-30
 **Tier:** Architecture
 **Decision:** Upgraded `studio` to eslint 10 + `@sanity/eslint-config-studio` v7 with a flat
@@ -36,3 +161,324 @@ duplicated peer therefore survive every incremental install. Deleting `package-l
 `node_modules` forces a real re-solve — and is the only local reproduction of what CI does.
 Relatedly, `npm warn deprecated` only prints on *fresh downloads*, so a warm `node_modules` will
 falsely look clean.
+
+### The blogs index filters on the client, over a fully server-rendered list — 2026-09-03
+**Tier:** Pattern
+**Decision:** `/blogs` fetches every post on the server with a dedicated `blogsIndexQuery`, renders
+the whole list, and hands it to one client island (`BlogsIndex`) that narrows it in memory. The
+category pills, the search box and `VIEW MORE` are all local state — no URL search params, no
+refetch, no server round-trip. Filtering is *derived during render*; there is no `useEffect`
+anywhere in the file.
+**Why:** The list is already on the page. Once the server has sent all 48 rows, narrowing them is a
+question about text the reader can already see — turning that into a network request would make an
+instant interaction slower and add a loading state that has nothing to load. It also settles the
+no-JavaScript story in the direction this codebase already committed to: the island server-renders,
+so without JS a reader still gets the masthead, the rules and the first page of rows. Only the
+narrowing is missing. Nothing sits hidden waiting for a script.
+The no-effect part is not stylistic. `react-hooks/set-state-in-effect` is an **error** in this repo,
+and the thing an effect would be reached for here — resetting the "how many rows are shown" counter
+when a filter changes — is exactly the wrong tool: the pill and search callbacks set both pieces of
+state in the same tick, so they cannot disagree in the first place. An effect would introduce a
+render where the count and the filter are out of step.
+**Alternatives considered:** `?category=…&q=…` in the URL with server-side filtering — rejected for
+now: it buys shareable filtered links, but costs a round-trip per keystroke and a debounce, on a
+dataset small enough to filter in under a millisecond. Worth revisiting if the archive grows large
+enough to need real pagination, at which point the URL becomes the right place for the state.
+Extending the shared `postFields` fragment instead of writing a new query — rejected: the index
+needs `category` and `readingMinutes`, and `readingMinutes` costs a `pt::text(content)` over every
+post's whole body, which `morePostsQuery` and `postQuery` should not pay for.
+**Concept for the learner:** "Where does this state live?" has three answers — the URL, the server,
+or the component — and the deciding question is *who else needs it*. URL state is for anything
+someone might link to, bookmark, or hit Back on. Server state is for anything that requires data the
+client does not have. Component state is for everything else, and a filter over an already-loaded
+list is squarely in the third bucket. Choosing the URL here would have been "more correct" in the
+abstract while being slower and more code in practice.
+The second idea worth keeping: *derive, don't synchronise*. Every time you feel the urge to write an
+effect that copies one piece of state into another, look for the place where both can be set
+together, or for a value that can simply be computed from what you already have. `matches` here is
+recomputed on every render from `rows`, `active` and `query` — there is no `filteredRows` state to
+fall out of date, and that is why the component has no bugs of the "stale list" kind.
+
+### `/posts` becomes `/blogs`, with a 307 rather than a 308 — 2026-09-03
+**Tier:** Pattern
+**Decision:** The post index lives at `/blogs`, and the nav, the footer and the featured ledger's
+trailing link all say "Blogs" and point there. Post *detail* pages stay at `/posts/[slug]`.
+`/posts` is redirected to `/blogs` in `next.config.ts` with `permanent: false`.
+**Why:** Three separate links — Header, Footer, and the "All posts" link under the featured ledger —
+pointed at `/posts`, which had no route file. Requests fell through to `app/[slug]/page.tsx`, found
+no `page` document with that slug, and rendered the Sanity template's `PageOnboarding`: a red slab
+reading "About Page (/about) does not exist yet". So the site's main navigation had three dead ends
+into template scaffolding.
+The detail routes did not move with the index because `/posts/[slug]` is the permalink shape: it is
+built by `linkResolver`, by the `reveal` annotation's serializer, by `sitemap.ts`, and by every
+existing shared or indexed URL. Renaming it would break all of them to buy nothing but symmetry.
+`permanent: false` because `/posts` never actually resolved to an index. A 308 tells browsers to
+cache the move *forever*, and browsers honour that aggressively — it is very hard to take back. A
+307 costs one extra request per visit to a URL nobody was successfully using, and stays reversible.
+**Alternatives considered:** Building the index at `/posts` instead — a real option, and it needs no
+redirect, but the page is titled "Blogs" and Rohit wanted the word to be "Blogs" everywhere, so a
+`/posts` URL would have been the one place it wasn't. Adding a rewrite instead of a redirect —
+rejected: a rewrite would serve the index at two URLs, which splits search-engine signal between
+them for no benefit.
+**Concept for the learner:** `permanent: true`/`false` maps to HTTP 308/301 and 307/302, and the
+difference is caching, not semantics — a permanent redirect can be cached by browsers and
+intermediaries indefinitely, which makes it the one routing decision that is genuinely hard to
+reverse. Reach for it only once a URL has real history worth consolidating.
+Also worth noting where redirects sit in the pipeline: Next checks them *before* the filesystem, so
+`source: "/posts"` wins over any route file at that path. And it is an exact match by default —
+`/posts/some-slug` does not match `/posts`, which is why the detail routes need no protecting.
+
+### Post titles rest quiet and lift on hover — 2026-09-03
+**Tier:** Pattern
+**Decision:** Reversed the hover treatment on editorial post titles in both lists. They were
+`text-foreground` at rest dimming to `group-hover:opacity-60`; they are now `text-muted-foreground`
+at rest brightening to `group-hover:text-foreground`, with `transition-colors` in place of
+`transition-opacity`. Applied to `app/blogs/BlogEntry.tsx` **and** `app/components/circle/
+FeaturedEntry.tsx`. Separately, the blogs row's hover cover-image thumbnail was removed, and with it
+`coverImage` from `blogsIndexQuery`.
+**Why:** The old direction was backwards as an affordance. Dimming on hover means the element you
+are pointing at is the *least* legible thing on screen at the moment you are reading it, and in
+light mode it made the list read dark-then-washed-out. The new direction also matches what every
+control on the site already does — nav links, filter pills, VIEW MORE, footer links are all
+`text-muted-foreground` → `hover:text-foreground`. Titles were the only thing running the other way.
+Both lists changed rather than only the one that was reported: a reader who learns the interaction
+on `/blogs` should find the same thing on the homepage, and two post lists responding in opposite
+directions to the same gesture is a bug you cannot see in either one alone.
+Two solid tokens, not an alpha. This file already records that `text-muted-foreground/70` measured
+**3.01:1** on the light ground — under AA for 12px — and that the alpha needed to clear 4.5 left no
+visible step. Measured after the change: `/blogs` title 5.51 → 18.05 light, 7.66 → 18.97 dark;
+Featured 6.01 → 19.68 light, 7.19 → 17.8 dark. All resting values clear AA.
+The blogs row's date came down from `text-foreground/80` (10.43:1) to plain `text-muted-foreground`
+at the same time. With the title resting muted, a near-black date would have made the *metadata*
+the loudest thing in every row.
+**Alternatives considered:** Lifting the whole row on hover rather than the title alone — rejected
+by Rohit; four things moving at once is a weaker signal than one. Keeping the date dark for the
+tonal step the design shows — rejected for the hierarchy inversion above. Deleting
+`useHoverThumbnail.tsx` after removing it from the blogs row — rejected: `FeaturedEntry` and
+`RevealLink` still use it, so the file stays and only the one call site went.
+**Concepts for the learner:** First, *hover should add signal, not remove it*. The question to ask
+of any hover state is "does this make the thing under the cursor easier to act on?" Dimming fails
+that test even when it looks stylish, and it is worth noticing that the codebase had already got
+this right everywhere except the titles — the inconsistency was the tell.
+Second, a measurement trap worth remembering: `transition-colors duration-300` means the computed
+colour is a *moving value* for 300ms after any change. Sampling `getComputedStyle(...).color` 120ms
+after toggling the theme returned mid-interpolation garbage that looked exactly like a real contrast
+regression — the dark title read 4.88:1 at rest and 3.72:1 on hover, i.e. hover *worse* than rest,
+which is impossible for the classes involved. The neighbouring date, which has no transition,
+snapped to its correct value in the same sample and was the clue. Always let transitions settle
+before measuring, and treat a physically impossible reading as a broken instrument first.
+Third, when a feature is removed, follow it back up the chain: dropping the thumbnail made the
+`imageUrl` prop dead, which made `urlForImage` dead, which made `coverImage` in the GROQ projection
+dead. A query that still fetches fields nothing reads is how the data layer quietly rots.
+
+### The reading page ranks headings by tier, not by tag — 2026-09-04
+**Tier:** Architecture
+**Decision:** Rebuilt `/posts/[slug]` around a centred 45rem measure with a collapsible contents
+panel. `app/posts/[slug]/outline.ts` walks the body once and returns two things from the same pass:
+the blocks to render, with each heading augmented with a `headingId` and a `headingTier`, and the
+list the panel shows. A heading's rank comes from `min(level - shallowestLevelInThisPost, 2)` —
+tier 0 renders `<h2>`, tier 1 `<h3>`, tier 2+ `<h4>` — rather than from whatever tag the author
+typed. Body typography is hand-rolled in `PostBody.tsx`; the shared `PortableText.tsx` keeps `prose`
+for the page builder and was not touched.
+**Why:** The content disagrees with itself. Measured across all 48 posts: 291 headings sit at the
+shallowest level and 41 one step in, but *which tag* that shallowest level uses varies — "Docker"
+and "What Is the Cloud" use h3 with no h2 anywhere, "Load Balancers" and "The Art of Downtime" use
+h2. Ranking by tag would render half the archive's section headings at sub-heading size, and a
+contents panel built on "list the h2s" would have been **empty on a third of the posts**.
+Deriving the id and the rank in the same walk is what makes the panel structurally incapable of
+lying about the body. The page it replaced is the cautionary tale: its h1/h2 serializers rendered an
+anchor link to `#{_key}` while nothing on the page ever carried a matching `id`, so every one of
+those links was dead. Verified after the rebuild: **332 contents links across 48 posts, zero dead
+anchors**, and exactly one `<h1>` per page (there was previously none — the title was an `<h2>`).
+Two edge cases turned out to be real rather than theoretical, which is the argument for handling
+them up front: one heading in the archive slugs to the empty string (it would have produced
+`id=""` on every such heading, colliding them all), and one post has no headings at all.
+**Alternatives considered:** `@tailwindcss/typography` with `prose-*` overrides — rejected on ~22
+overrides plus `max-w-none`, but decisively because `prose` sizes headings *by tag* and this page
+sizes them *by rank*; no `prose-h3:` configuration can say "large when it is the shallowest heading
+here". Normalising only the contents panel and leaving the body on its raw tags — rejected: the two
+halves of the page would then describe different documents. Editing the shared `PortableText.tsx` —
+rejected, it renders `InfoSection` and would have silently restyled `/about`.
+**Concepts for the learner:** First, *derive once, use twice*. Any time two parts of a page have to
+agree about the same structure, generate both from one pass rather than computing each from the
+source separately. The old broken anchors are what "computed separately" looks like after a few
+months.
+Second, a native element beats a component when it exists. The contents panel is a `<details open>`:
+keyboard operable, disclosure state exposed to assistive tech, open on the server with no
+JavaScript. The only client code is the scroll-spy highlight, so the panel works completely before
+any script runs — which is the house rule this repo already committed to.
+Third, and the bug worth remembering: the highlight was originally driven by an IntersectionObserver
+and landed **one entry short** after every contents-link click. An observer fires when an element
+*crosses* a boundary and delivers nothing once the page comes to rest, so the last callback arrived
+while the smooth scroll was still moving. A rAF-throttled `scroll` listener that re-measures every
+heading from scratch is both simpler and provably correct: it cannot miss a resting position, and a
+dropped frame is harmless because nothing is accumulated. Reach for an observer when you care about
+*transitions*, not when you care about *current state*.
+
+### The community road is measured in JavaScript and drawn in CSS — 2026-09-06
+**Tier:** Architecture
+**Decision:** Built `/community` as a journey: a meandering line down the page through every event,
+drawing itself in as the reader travels, with a sticky gauge naming the date of the stop they are
+at. The line's **geometry** is computed in a client island — node centres measured from the DOM, a
+control point bowed sideways at each midpoint, a Catmull–Rom spline fitted through the result — but
+the **drawing** is a CSS scroll-driven animation. The path carries `pathLength="1"`, so
+`stroke-dashoffset` runs 1 → 0 in unit space with no `getTotalLength()` and no per-frame JavaScript.
+Events are a new `communityEvent` document type; a `kind` field (`core` / `attended`) sets how much
+weight an entry carries and **never renders as a label**.
+**Why:** The path has to pass through stops whose positions depend on how the copy wrapped and how
+tall each card turned out, so it cannot be hand-drawn or computed on the server — that part is
+genuinely a measurement problem. The *drawing* is not: it is a function of scroll position, which is
+exactly what `animation-timeline` exists for. Splitting it that way means the only JavaScript that
+runs per-frame on this page is the gauge's date.
+The range is derived rather than dialled in: `entry P%` puts the road's top edge at `(100 - P)%` down
+the viewport and `exit P%` puts its bottom edge there, so `entry 42%` draws in exact step with a
+reading line at 58% — the same line the gauge uses. Both halves are viewport-relative, so it holds at
+any window height. The first attempt used numbers picked by eye and left the reader two stops in
+before the line moved at all.
+**Alternatives considered:** The supplied prototype hid every card behind `opacity: 0` and undid it
+with a JS-added class — rejected outright, that is the exact failure mode this file already commits
+against, and with the script blocked the whole journey would be invisible. Cards reuse the existing
+`.scroll-rise` instead. A single roving highlight on the current stop (as the prototype does) —
+rejected: stops now light as you reach them and **stay** lit, which agrees with a line that is drawn
+cumulatively instead of contradicting it, and it needs no JavaScript at all. An IntersectionObserver
+for the gauge — rejected for the reason recorded in the post-page entry: it reports transitions, not
+resting state.
+**Concepts for the learner:** First, when something depends on layout, ask whether *all* of it does.
+Here "where are the stops" needed measurement and "how much is drawn" did not, and separating the two
+turned a scroll handler into a CSS declaration.
+Second, a typed union from the CMS is not the string you think it is. `sanityFetch` returns
+`StegaString<"core">`, not `"core"`, because Sanity encodes edit metadata into strings as invisible
+characters for the Presentation tool. `event.kind === "core"` type-errors — and had it merely been
+cast away, it would have been **false in draft mode**, quietly rendering every entry at the lighter
+weight while looking perfect on the published site. Compare through `stegaClean`, and clean the value
+before putting it in a `data-` attribute a CSS selector will match on.
+Third, a page's chrome has a budget. Adding "Community" made three nav links, which pushed the header
+21px past its container at 375px and put the wordmark against the first link. The bar already sheds
+weight as it tightens — the `.tech` suffix, then LinkedIn — so the fix was to continue that ladder
+rather than invent a new mechanism. At 320px it now fits without overflowing but with no breathing
+room; a real menu is the answer if that width ever matters.
+
+### The figuring-out statement became rich text — 2026-09-13
+**Tier:** Pattern
+**Decision:** Rebuilt the copy side of "What I'm figuring out". `leadLines` went from an array of
+plain strings to restricted Portable Text carrying a single custom `hollow` decorator, so one word —
+"answers", in a sentence about not having them — can be drawn as an outline from the Studio. The
+lines now share one left edge instead of stepping right, and the body sits under the statement. The
+arc on the right is unchanged.
+**Why:** The section needed the emphasis to live *inside* a line, and a plain string array has no way
+to express that. The alternatives were worse in the ways this file already records elsewhere: a
+sibling `hollowWord` field splits one sentence across two inputs with nothing keeping them in sync,
+which is the argument made under the `reveal` annotation; and a marker convention like `*answers*`
+puts magic syntax in a field that gives the editor no hint it exists.
+The staircase indent went because it was `index * 2.5rem` with no responsive clamp — a third line
+would have been indented 5rem inside a 24px gutter on a phone.
+**Honest note on how this landed:** the first attempt also replaced the arc with four drifting rings,
+and moved the section onto the page ground with hairlines. Both were reverted after seeing them
+rendered — the rings on the argument that a closing circle contradicts a statement about not having
+answers, which read better in prose than on the page, and the ground because it broke a rhythm the
+neighbouring sections had already established. What survived is the part that was about the content
+rather than the decoration.
+**Concepts for the learner:** First, changing a Sanity field's *type* invalidates the content already
+in it. `leadLines` going from `array of string` to `array of block` meant the two existing strings had
+to be converted in the same pass — schema and data move together, or the Studio shows a broken field.
+The migration also did work the schema alone could not: it re-split one line into two and attached the
+hollow mark.
+Second, deleting a component is rarely just deleting a file. When the rings briefly replaced the arc,
+`OpenArc` turned out to be the only thing keeping `@property --arc-close`, `.spin-in-place`, three
+drift animations, `.scroll-arc*`, `.scroll-line` and `--line-opacity` alive — about 40 lines across
+five separate places in globals.css. Grep each identifier before removing it: `.scroll-rise` looked
+like part of the same family and would have taken the community journey's cards down with it. That
+lesson survived the revert; `.scroll-line` and `--line-opacity` are still gone, because the new
+statement genuinely does not use them.
+Third, and the reason this entry reads the way it does: a decision log is only worth keeping if it
+describes what shipped. Two paragraphs here originally argued that the arc was wrong and the rings
+were right. Leaving that in place next to code that does the opposite would make every other entry
+less trustworthy.
+
+### Where the deployed Studio actually lives, and what `.next` was hiding — 2026-09-30
+**Tier:** Pattern
+**Decision:** Three fixes that only look unrelated, because all three presented as "the Maintenant
+section is broken". The hosted Studio's identity is pinned in `studio/sanity.cli.ts` as
+`deployment.appId`, so `npm run deploy` reaches the Studio that already exists instead of claiming
+none is configured. Local content staleness is cleared with `rm -rf .next`, not
+`rm -rf .next/cache`. And `Maintenant`'s Portable Text `normal` serializer
+now carries `mt-6 first:mt-0`, so a body with more than one paragraph actually has gaps between
+them.
+**Why:** The Studio kept reporting *"Item of type `block` not valid for this list"* long after
+`leadLines` became rich text, because the deployed bundle was from 2026-09-06 and predated the
+schema change. `sanity deploy` refused to run, claiming no studio hostname was configured, and
+`SANITY_STUDIO_STUDIO_HOST` in `studio/.env` was indeed empty. That empty value was a red herring:
+querying `/v2024-08-01/user-applications?projectId=owol5nwb` shows exactly one app,
+`nthc0t4wnmk4c791z66r00vo`, already carrying `appHost: rohitdevtech`. The host had existed
+server-side for over a year. Passing it with `--url` targets that app; it does not create a second
+one, which `--dry-run` states in as many words — *"Deploys to existing studio"*.
+The paragraph margin was missing because the serializer emitted a bare `<p>`. Spacing lives on the
+paragraph rather than as a `space-y` on the wrapper so that it survives whatever lays the body out,
+which is the same pattern already used in `app/posts/[slug]/PostBody.tsx`.
+**Honest note on how this landed:** two of these cost far more time than the fixes are worth, both
+through the same error — trusting an inference over a measurement. Earlier in the project a masking
+script rendered that env line as `SANITY_STUDIO_STUDIO_HOST="" #########`, and I read the masked
+`#Optional` *comment* as a hostname that had been typed outside the quotes, then "fixed" it by
+quoting it in. The next deploy tried to create `https://#Optional.sanity.studio`. The masking had
+hidden the one character — the leading `#` — that identified what it was. On the back of that I
+also told Rohit that deploying would create a second Studio, which was wrong, and which delayed the
+actual fix by a day. Nothing about the situation was ambiguous; I just never ran the query that
+would have answered it.
+**Concepts for the learner:** First, deployment state is server state. `studio/.env`, `sanity.cli.ts`
+and `--url` are only ways of *addressing* a deployed app — none of them is the record of what
+exists. When a CLI and your config disagree, ask the API which one is describing reality, and
+prefer `--dry-run` over inferring what a command will do. A dry run that prints its target is worth
+more than any amount of reasoning about it. Once you have learned such an identifier the expensive
+way, write it into tracked config rather than leaving it in a flag someone has to remember: `appId`
+in `sanity.cli.ts` is version-controlled, which an env var in a gitignored file never is.
+Second, "the CMS shows new content but the site doesn't" is three different bugs wearing the same
+costume: unpublished drafts, a stale CDN, or a stale framework cache. Distinguish them by querying
+each layer separately rather than guessing — here the drafts perspective, then `useCdn: true`
+against `useCdn: false`. Both returned the new copy, which ruled out Sanity entirely and pointed at
+Next. Worth knowing that `.next/cache` is not the whole cache: the fetch results survived deleting
+it and only cleared when the full `.next` went.
+Third, placeholder content hides a whole class of defect. Every body in this section was a single
+line until real copy arrived, and a missing paragraph margin is invisible until something has two
+paragraphs. When seeding a CMS field, make at least one fixture the awkward shape — several
+paragraphs, a very long title, an empty optional — or the first real content becomes the test.
+
+### The footer wordmark is a hole in a plate, not a masked video — 2026-10-01
+**Tier:** Pattern
+**Decision:** The footer ends with `rohittech.in` at full width with footage running inside the
+letters. The video is not masked. An SVG plate the exact colour of the footer ground sits *over* it
+with the wordmark cut out, so the glyphs are the only place the footage reaches. The cutting is
+done by an SVG `<mask>` inside the same `<svg>` as the plate, and the `<video>` is a client island
+that withholds its `src` until an IntersectionObserver says the band is close.
+**Why:** Three constraints picked this shape, and each one ruled out the more obvious option.
+The usual trick for video-in-text is `mix-blend-mode` over a solid ground. That needs the ground to
+be pure black or pure white, and this footer is `oklch(0.15 0 0)` in light and `oklch(0.11 0 0)` in
+dark — so any video pixel brighter than the slab would have bled through *outside* the letters. The
+next option, CSS `mask-image: url(#id)` pointing at an inline SVG mask, is the one Safari has
+historically got wrong. Masking inside the SVG has neither problem, and has the side benefit that
+the video element stays an ordinary box that knows nothing about the effect.
+The geometry is measured, not dialled in. Geist 300 renders `rohittech.in` as 493.64 of advance
+over 72.2 of ink, so that is the viewBox, and the container carries the same ratio as an
+`aspect-ratio` so the plate lands edge to edge. The plate rects are drawn larger than the viewBox
+anyway: if the two ever disagree, `meet` letterboxes the drawing, and a rect sized to the viewBox
+would leave raw video showing in the bars.
+**Honest note on the asset:** the supplied file could not ship. It was HEVC, which plays only in
+Safari, so in Chrome and Firefox the letters would have been empty — the feature would have looked
+finished to whoever tested it on a Mac and been invisible to most visitors. It was also 23MB at
+9.3 Mbps with an audio track a muted loop has no use for.
+**Concepts for the learner:** First, an asset's *format* is part of whether a feature works, not a
+detail to optimise afterwards. Check the codec before building anything on top of a media file;
+`ffprobe` answers it in one command, and "it plays on my machine" answers nothing.
+Second, contrast applies to video too. The footage bottomed out at luma 0 while the footer ground
+sits at 11/255, which meant the darkest parts of the letters were *darker than the plate around
+them* and dissolved into it. Lifting the black floor to 18 fixed it — and made the file smaller
+(1.91MB to 1.61MB), because encoding deep-shadow noise had been costing real bitrate. Measuring
+`signalstats` beat staring at the screenshot, which only suggested some letters looked "a bit
+faint".
+Third, `preload="none"` does not survive `autoplay`. Measured on /blogs, the browser pulled all
+1.65MB at 388ms with the band 1631px below the fold, on every route, because the footer lives in
+the root layout. Withholding `src` until an observer fires is the only thing that actually defers
+it. The rule this follows is the same one the scroll sections follow: the wordmark itself is in the
+server HTML — mask, text, plate and poster still — so it is complete on first paint and correct
+without JavaScript. Only the movement waits. A pleasant consequence is that under
+`prefers-reduced-motion` the element is `display: none`, never intersects, and the video is never
+requested at all: the reader who asked for less motion also stops paying for it.

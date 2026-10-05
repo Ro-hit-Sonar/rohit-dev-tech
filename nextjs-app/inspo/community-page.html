@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Community — rohitdev.tech</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap">
+<style>
+:root{
+  --sans:"Helvetica Neue","Inter",Helvetica,Arial,sans-serif;
+  --paper:#F2F2F0;
+  --paper-2:#EAEAE6;
+  --ink:#0F0F0E;
+  --ink-2:#61615B;
+  --ink-3:#A2A29B;
+  --rule:#DCDCD6;
+  --rule-faint:#E6E6E0;
+  --img:url("community-collage.png");   /* swap per-event photos in */
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0D0D0C;--paper-2:#151513;--ink:#F2F2EE;
+    --ink-2:#8C8C86;--ink-3:#62625D;--rule:#242422;--rule-faint:#1B1B19;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0D0D0C;--paper-2:#151513;--ink:#F2F2EE;
+  --ink-2:#8C8C86;--ink-3:#62625D;--rule:#242422;--rule-faint:#1B1B19;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--paper)}
+body{font-family:var(--sans);font-weight:400;color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:1px solid var(--ink);outline-offset:3px}
+.label{font-size:11px;letter-spacing:.19em;text-transform:uppercase;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.wrap{max-width:1300px;margin:0 auto;padding:0 clamp(20px,4.4vw,72px)}
+
+/* ── nav ────────────────────────────────────────────────── */
+.nav{border-bottom:1px solid var(--rule)}
+.nav-in{display:flex;align-items:center;justify-content:space-between;gap:24px;height:74px}
+.brand{font-size:13px;letter-spacing:.19em;text-transform:uppercase;font-weight:500}
+.brand span{color:var(--ink-3);font-weight:400}
+.nav-right{display:flex;align-items:center;gap:clamp(14px,2vw,30px)}
+.nav-links{display:flex;gap:clamp(14px,2vw,28px)}
+.nav-links a{font-size:14px;color:var(--ink-2);position:relative;padding-bottom:3px}
+.nav-links a[aria-current]{color:var(--ink)}
+.nav-links a::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--ink);transform:scaleX(0);transform-origin:left;transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.nav-links a[aria-current]::after,.nav-links a:hover::after{transform:scaleX(1)}
+.icons{display:flex;gap:8px;padding-left:clamp(10px,1.6vw,22px);border-left:1px solid var(--rule)}
+.icons a,.icons button{width:34px;height:34px;display:grid;place-items:center;border:1px solid var(--rule);border-radius:50%;background:none;color:var(--ink-2);cursor:pointer;transition:border-color .25s,color .25s}
+.icons a:hover,.icons button:hover{border-color:var(--ink);color:var(--ink)}
+.icons svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── hero ───────────────────────────────────────────────── */
+.hero{padding:clamp(60px,8vw,116px) 0 clamp(48px,6vw,80px);text-align:center}
+.hero .kick{margin:0 0 clamp(22px,3vw,34px)}
+.hero h1{margin:0;font-size:clamp(2.4rem,5.4vw,4.2rem);font-weight:400;letter-spacing:-.032em;line-height:1.02}
+.hero p{margin:26px auto 0;max-width:56ch;font-size:clamp(1rem,1.2vw,1.15rem);line-height:1.66;color:var(--ink-2);text-wrap:pretty}
+
+/* ── the instrument: sticky date, updates at each stop ──── */
+.gauge{
+  position:sticky;top:0;z-index:20;
+  background:var(--paper);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.gauge-in{display:flex;align-items:center;gap:24px;height:74px}
+.g-date{
+  font-size:clamp(1.3rem,2.1vw,1.85rem);font-weight:400;
+  letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1;
+}
+.g-date.turn{animation:turn .5s cubic-bezier(.22,1,.36,1)}
+@keyframes turn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+
+/* ── journey ────────────────────────────────────────────── */
+.road{position:relative}
+.journey{padding:clamp(56px,7vw,96px) 0 clamp(40px,5vw,70px)}
+.line{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:visible}
+.line path{fill:none;stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.line .ahead{stroke:var(--rule)}
+.line .past{stroke:var(--ink)}
+
+.events{position:relative;z-index:1}
+
+.ev{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:0 clamp(40px,7vw,120px)}
+.ev.c{margin-bottom:clamp(78px,8vw,124px)}
+.ev.a{margin-bottom:clamp(62px,6.5vw,100px)}
+.ev:last-child{margin-bottom:0}
+
+/* node sits on the line; --nx drives the meander */
+.node{
+  position:absolute;left:var(--nx);top:50%;
+  transform:translate(-50%,-50%);z-index:2;
+  display:grid;place-items:center;
+}
+.node i{
+  display:block;border-radius:50%;
+  box-shadow:0 0 0 7px var(--paper);
+  transition:transform .4s cubic-bezier(.22,1,.36,1),background .4s,border-color .4s;
+}
+.ev.c .node i{width:12px;height:12px;background:var(--rule)}
+.ev.a .node i{width:8px;height:8px;background:var(--paper);border:1px solid var(--rule)}
+.ev.on.c .node i{background:var(--ink);transform:scale(1.15)}
+.ev.on.a .node i{border-color:var(--ink);background:var(--paper)}
+
+/* card side placement — text stays left-aligned for readability,
+   the column hugs the line */
+.card{max-width:460px;opacity:0;transform:translateY(20px);transition:opacity .7s,transform .7s cubic-bezier(.22,1,.36,1)}
+.ev.in .card{opacity:1;transform:none}
+.ev.left  .card{grid-column:1;margin-left:auto}
+.ev.right .card{grid-column:2}
+.ev.a .card{max-width:330px}
+
+/* the date sits opposite the card, across the line — part of the
+   journey itself, not only in the sticky bar */
+.stamp{
+  position:absolute;top:50%;transform:translateY(-50%);
+  opacity:0;transition:opacity .7s .1s;white-space:nowrap;
+}
+.ev.in .stamp{opacity:1}
+.ev.left  .stamp{left:calc(var(--nx) + 32px)}
+.ev.right .stamp{right:calc(100% - var(--nx) + 32px);text-align:right}
+.stamp b{display:block;font-weight:400;color:var(--ink-2)}
+.ev.on .stamp b{color:var(--ink)}
+
+/* weight alone separates a bigger moment from a smaller one —
+   nothing on the page names the two types */
+.ev.c .t{font-size:clamp(1.3rem,1.8vw,1.62rem);letter-spacing:-.021em;line-height:1.22;margin:0;font-weight:400}
+.ev.a .t{font-size:1.04rem;letter-spacing:-.008em;line-height:1.3;margin:0;font-weight:400;color:var(--ink-2)}
+.where{margin:9px 0 0;font-size:12px;letter-spacing:.02em;color:var(--ink-3)}
+.ev.c .say{margin:15px 0 0;font-size:1rem;line-height:1.66;color:var(--ink-2);text-wrap:pretty}
+.ev.a .say{margin:9px 0 0;font-size:.92rem;line-height:1.6;color:var(--ink-3)}
+
+/* photos, cropped from one sheet — swap for real per-event images */
+.shots{display:grid;gap:5px;margin-top:20px}
+.shots[data-n="1"]{grid-template-columns:1fr}
+.shots[data-n="2"]{grid-template-columns:1fr 1fr}
+.shots[data-n="3"]{grid-template-columns:1fr 1fr 1fr}
+.shots[data-n="4"]{grid-template-columns:1fr 1fr}
+.shot{
+  background-image:var(--img);background-repeat:no-repeat;
+  background-size:480% auto;
+  background-position:var(--px) var(--py);
+  filter:grayscale(1) brightness(.99) contrast(1.3);
+  border:1px solid var(--rule-faint);
+}
+.shots[data-n="1"] .shot{aspect-ratio:16/10}
+.shots[data-n="2"] .shot{aspect-ratio:4/3}
+.shots[data-n="3"] .shot,.shots[data-n="4"] .shot{aspect-ratio:1}
+.ev.a .shots{margin-top:14px;max-width:250px}
+
+/* ── arrival ────────────────────────────────────────────── */
+.end{position:relative;z-index:1;text-align:center;padding:clamp(60px,7vw,100px) 0 clamp(70px,9vw,120px)}
+.end .cap{width:11px;height:11px;border-radius:50%;background:var(--ink);margin:0 auto 30px;box-shadow:0 0 0 7px var(--paper)}
+.end h2{margin:0 0 18px;font-size:clamp(1.5rem,2.4vw,2rem);font-weight:400;letter-spacing:-.024em}
+.end p{margin:0 auto 34px;max-width:46ch;font-size:1rem;line-height:1.66;color:var(--ink-2)}
+.btn{font-size:12.5px;letter-spacing:.11em;text-transform:uppercase;padding:14px 26px;border-radius:999px;background:var(--ink);color:var(--paper);display:inline-flex;align-items:center;gap:11px;transition:gap .25s}
+.btn:hover{gap:16px}
+
+@media (max-width:900px){
+  .ev{grid-template-columns:1fr;padding-left:44px}
+  .ev.left .card,.ev.right .card{grid-column:1;margin-left:0;max-width:none}
+  .ev.left .stamp,.ev.right .stamp{grid-column:1;text-align:left;margin:0 0 12px}
+  .node{left:8px!important}
+  .ev.a .shots{max-width:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .card,.stamp{opacity:1!important;transform:none!important;transition:none}
+  .g-date.turn{animation:none}
+}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-in">
+    <a class="brand" href="/">ROHITDEV<span>.TECH</span></a>
+    <div class="nav-right">
+      <nav class="nav-links">
+        <a href="/about">About</a>
+        <a href="/blogs">Posts</a>
+        <a href="/community" aria-current="page">Community</a>
+      </nav>
+      <div class="icons">
+        <a href="#" aria-label="GitHub"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.9a3.4 3.4 0 0 0-.9-2.6c3-.3 6.2-1.5 6.2-6.7A5.2 5.2 0 0 0 19.9 5a4.9 4.9 0 0 0-.1-3.6s-1.1-.3-3.7 1.4a12.7 12.7 0 0 0-6.8 0C6.7 1.1 5.6 1.4 5.6 1.4A4.9 4.9 0 0 0 5.5 5 5.2 5.2 0 0 0 4.1 8.8c0 5.2 3.2 6.4 6.2 6.7a3.4 3.4 0 0 0-.9 2.6V22"/></svg></a>
+        <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6zM6 9H2v12h4z"/><circle cx="4" cy="4" r="2"/></svg></a>
+        <button id="theme" aria-label="Toggle theme"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section class="wrap hero">
+  <p class="kick label">In Community</p>
+  <h1>The road so far</h1>
+  <p>It runs backwards: the most recent first, then further back with every scroll. Some of it I helped build, some of it I just showed up for.</p>
+</section>
+
+<div class="gauge">
+  <div class="wrap gauge-in">
+    <span class="g-date" id="gdate">Feb 2026</span>
+  </div>
+</div>
+
+<div class="road" id="road">
+  <svg class="line" id="line" aria-hidden="true">
+    <path class="ahead" id="ahead"></path>
+    <path class="past"  id="past"></path>
+  </svg>
+
+<section class="wrap journey" id="journey">
+
+  <div class="events" id="events">
+
+    <article class="ev a left" style="--nx:58%" data-date="Feb 2026">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Developer meetup</h2>
+        <p class="where">Evening meetup</p>
+        <p class="say">Back in the audience, which is a good place to be every so often.</p>
+        <div class="shots" data-n="1">
+          <div class="shot" style="--px:26%;--py:51%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Feb 2026</b></div>
+    </article>
+
+    <article class="ev c right" style="--nx:42%" data-date="Sep 2025">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Speaking at a tech event</h2>
+        <p class="where">Next.js Summit · Scaler School of Technology, Bengaluru · 13 Sep 2025</p>
+        <p class="say">Standing in front of the room this time. I over-prepared the slides and under-prepared for the questions, which everyone tells you and nobody believes until it happens.</p>
+        <div class="shots" data-n="3">
+          <div class="shot" style="--px:18%;--py:46%"></div>
+          <div class="shot" style="--px:52%;--py:57%"></div>
+          <div class="shot" style="--px:90%;--py:50%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Sep 2025</b></div>
+    </article>
+
+    <article class="ev a right" style="--nx:40%" data-date="May 2025">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Next.js Summit, Pune</h2>
+        <p class="where">24 May 2025 · Pune</p>
+        <p class="say">A day of talks and a long train home spent writing down half of them.</p>
+        <div class="shots" data-n="1">
+          <div class="shot" style="--px:70%;--py:56%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>May 2025</b></div>
+    </article>
+
+    <article class="ev c left" style="--nx:60%" data-date="Jan 2025">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Next.js India Developer Association<br>Core Team</h2>
+        <p class="where">Community organising · Ongoing</p>
+        <p class="say">Programming, speakers, the hundred small decisions that make a room feel worth travelling to. This is the one that turned occasional attendance into something I actually help run.</p>
+        <div class="shots" data-n="4">
+          <div class="shot" style="--px:12%;--py:50%"></div>
+          <div class="shot" style="--px:34%;--py:53%"></div>
+          <div class="shot" style="--px:58%;--py:49%"></div>
+          <div class="shot" style="--px:86%;--py:54%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Jan 2025</b></div>
+    </article>
+
+    <article class="ev a left" style="--nx:57%" data-date="Jul 2024">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Developer meetup</h2>
+        <p class="where">Evening meetup</p>
+        <p class="say">Mostly hallway conversation. Two of the people I met here I still talk to.</p>
+        <div class="shots" data-n="2">
+          <div class="shot" style="--px:30%;--py:58%"></div>
+          <div class="shot" style="--px:44%;--py:44%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Jul 2024</b></div>
+    </article>
+
+    <article class="ev c right" style="--nx:43%" data-date="Mar 2024">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">Conducting a workshop</h2>
+        <p class="where">Hands-on session · Two hours</p>
+        <p class="say">Teaching something is the fastest way to find the holes in how you understand it. Half the session ended up being questions I had not prepared for, which was the useful half.</p>
+        <div class="shots" data-n="2">
+          <div class="shot" style="--px:64%;--py:52%"></div>
+          <div class="shot" style="--px:78%;--py:47%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Mar 2024</b></div>
+    </article>
+
+    <article class="ev a right" style="--nx:41%" data-date="Nov 2023">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">React workshop</h2>
+        <p class="where">Community workshop</p>
+        <p class="say">A full Saturday on hooks and rendering. Went home and rewrote something that had been annoying me for months.</p>
+        <div class="shots" data-n="1">
+          <div class="shot" style="--px:50%;--py:50%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Nov 2023</b></div>
+    </article>
+
+    <article class="ev c left" style="--nx:59%" data-date="Aug 2023">
+      <span class="node"><i></i></span>
+      <div class="card">
+        <h2 class="t">GDSC Core Team</h2>
+        <p class="where">Google Developer Student Clubs · Campus chapter</p>
+        <p class="say">The first time I was on the other side of an event — figuring out that most of the work is logistics, and that the talk everyone remembers is usually the one where somebody admitted what they got wrong.</p>
+        <div class="shots" data-n="3">
+          <div class="shot" style="--px:8%;--py:52%"></div>
+          <div class="shot" style="--px:22%;--py:48%"></div>
+          <div class="shot" style="--px:36%;--py:55%"></div>
+        </div>
+      </div>
+      <div class="stamp label"><b>Aug 2023</b></div>
+    </article>
+  </div>
+</section>
+
+<section class="wrap end">
+  <div class="cap"></div>
+  <h2>Where it began</h2>
+  <p>Everything above came after this one. The line keeps going in the other direction.</p>
+  <a class="btn" href="#">Say hello <span aria-hidden="true">&rarr;</span></a>
+</section>
+</div>
+
+<script>
+(function(){
+  var road=document.getElementById('road'),
+      journey=document.getElementById('journey'),
+      svg=document.getElementById('line'),
+      ahead=document.getElementById('ahead'),
+      past=document.getElementById('past'),
+      evs=[].slice.call(document.querySelectorAll('.ev')),
+      gdate=document.getElementById('gdate'),
+      len=0, cur=-1;
+
+  // Catmull-Rom through the real node centres -> one smooth bezier.
+  // Building it from the DOM (not a hand-drawn path) means the line
+  // always passes through every stop, whatever the content height.
+  function spline(p,t){
+    var d='M'+p[0][0].toFixed(1)+','+p[0][1].toFixed(1);
+    for(var i=0;i<p.length-1;i++){
+      var p0=p[i-1]||p[i], p1=p[i], p2=p[i+1], p3=p[i+2]||p[i+1];
+      d+='C'+(p1[0]+(p2[0]-p0[0])/6*t).toFixed(1)+','+(p1[1]+(p2[1]-p0[1])/6*t).toFixed(1)
+        +' '+(p2[0]-(p3[0]-p1[0])/6*t).toFixed(1)+','+(p2[1]-(p3[1]-p1[1])/6*t).toFixed(1)
+        +' '+p2[0].toFixed(1)+','+p2[1].toFixed(1);
+    }
+    return d;
+  }
+
+  function build(){
+    var jr=road.getBoundingClientRect(), w=jr.width, h=road.offsetHeight;
+    svg.setAttribute('width',w); svg.setAttribute('height',h);
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    var pts=evs.map(function(ev){
+      var n=ev.querySelector('.node').getBoundingClientRect();
+      return [n.left+n.width/2-jr.left, n.top+n.height/2-jr.top];
+    });
+    if(!pts.length) return;
+    pts.unshift([pts[0][0],0]);
+    var cap=document.querySelector('.end .cap').getBoundingClientRect();
+    pts.push([cap.left+cap.width/2-jr.left, cap.top+cap.height/2-jr.top]);
+    // push a control point out sideways between each pair of stops —
+    // without it the spline draws near-straight diagonals
+    var bowed=[pts[0]];
+    for(var k=0;k<pts.length-1;k++){
+      var A=pts[k],B=pts[k+1],dx=B[0]-A[0];
+      var bow=(dx===0?0:(dx>0?1:-1))*Math.min(78,Math.abs(dx)*0.55+30);
+      bowed.push([(A[0]+B[0])/2+bow,(A[1]+B[1])/2]);
+      bowed.push(B);
+    }
+    var d=spline(bowed,0.9);
+    ahead.setAttribute('d',d); past.setAttribute('d',d);
+    len=past.getTotalLength();
+    past.style.strokeDasharray=len; past.style.strokeDashoffset=len;
+    tick();
+  }
+
+  function tick(){
+    var jr=road.getBoundingClientRect(), vh=innerHeight;
+    // travelled fraction, measured to the closing dot rather than to the
+    // container bottom — so the line is exactly full when you arrive
+    var capR=document.querySelector('.end .cap').getBoundingClientRect();
+    var capY=capR.top+capR.height/2;
+    // finish a little before the dot reaches mid-screen, so the line is
+    // fully drawn once you can actually see the end of the road
+    var p=(vh*0.55-jr.top)/Math.max(1,(capY-jr.top)-vh*0.32);
+    p=Math.max(0,Math.min(1,p));
+    past.style.strokeDashoffset=len*(1-p);
+
+    var i=-1;
+    evs.forEach(function(ev,n){
+      var r=ev.getBoundingClientRect();
+      if(r.top<vh*0.72) ev.classList.add('in');
+      if(r.top+r.height/2<vh*0.58) i=n;
+    });
+    // i === -1 means the journey hasn't been reached yet: show the first
+    // date in the gauge, but light no node — otherwise a stop reads as
+    // "arrived" while the line hasn't been drawn to it
+    if(i!==cur){
+      cur=i;
+      evs.forEach(function(ev,n){ ev.classList.toggle('on',i>=0&&n===i) });
+      var ev=evs[i<0?0:i];
+      gdate.textContent=ev.dataset.date;
+      gdate.classList.remove('turn'); void gdate.offsetWidth; gdate.classList.add('turn');
+    }
+  }
+
+  addEventListener('scroll',tick,{passive:true});
+  addEventListener('resize',build);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(build);
+  addEventListener('load',build);
+  build();
+
+  var b=document.getElementById('theme'),r=document.documentElement;
+  b.addEventListener('click',function(){
+    var dark=r.getAttribute('data-theme')==='dark'||
+      (!r.getAttribute('data-theme')&&matchMedia('(prefers-color-scheme:dark)').matches);
+    r.setAttribute('data-theme',dark?'light':'dark');
+  });
+})();
+</script>
+</body>
+</html>

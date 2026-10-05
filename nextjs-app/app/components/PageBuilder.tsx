@@ -61,16 +61,16 @@ function renderEmptyState(page: GetPageQueryResult) {
     return null;
   }
   return (
-    <div className="container">
-      <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight sm:text-5xl">
+    <div className="mx-auto w-full max-w-6xl px-6">
+      <h1 className="text-4xl font-extrabold text-foreground tracking-tight sm:text-5xl">
         This page has no content!
       </h1>
-      <p className="mt-2 text-base text-gray-500">
+      <p className="mt-2 text-base text-muted-foreground">
         Open the page in Sanity Studio to add content.
       </p>
       <div className="mt-10 flex">
         <Link
-          className="rounded-full flex gap-2 mr-6 items-center bg-black hover:bg-red-500 focus:bg-cyan-500 py-3 px-6 text-white transition-colors duration-200"
+          className="rounded-full flex gap-2 mr-6 items-center bg-primary text-primary-foreground hover:bg-brand hover:text-brand-foreground py-3 px-6 transition-colors duration-200"
           href={`${studioUrl}/structure/intent/edit/template=page;type=page;path=pageBuilder;id=${page._id}`}
           target="_blank"
           rel="noopener noreferrer"

@@ -21,6 +21,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 1,
     changeFrequency: "monthly",
   });
+  // The blogs index is a hardcoded route, so the Sanity projection below — which
+  // only knows about `page` and `post` documents — can never surface it.
+  sitemap.push({
+    url: `${domain}/blogs`,
+    lastModified: new Date(),
+    priority: 0.8,
+    changeFrequency: "weekly",
+  });
 
   if (allPostsAndPages != null && allPostsAndPages.data.length != 0) {
     let priority: number;

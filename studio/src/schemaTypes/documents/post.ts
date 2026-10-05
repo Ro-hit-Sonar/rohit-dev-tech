@@ -37,6 +37,23 @@ export const post = defineType({
       type: 'blockContent',
     }),
     defineField({
+      name: 'category',
+      title: 'Category',
+      description:
+        'Shown as the tag in the featured list on the home page. Optional — older posts have none.',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Fundamentals', value: 'Fundamentals'},
+          {title: 'System Design', value: 'System Design'},
+          {title: 'AI', value: 'AI'},
+          {title: 'Infrastructure', value: 'Infrastructure'},
+          {title: 'Practice', value: 'Practice'},
+          {title: 'Reliability', value: 'Reliability'},
+        ],
+      },
+    }),
+    defineField({
       name: 'excerpt',
       title: 'Excerpt',
       type: 'text',

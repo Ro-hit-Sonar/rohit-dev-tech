@@ -29,3 +29,8 @@ next-env.d.ts
 
 # VS Code
 .vscode
+
+# local agent tooling and test output
+.claude/
+.cursor/
+.playwright-mcp/

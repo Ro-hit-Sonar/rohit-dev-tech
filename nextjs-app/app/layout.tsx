@@ -2,7 +2,7 @@ import "./globals.css";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 import { draftMode } from "next/headers";
 import { toPlainText } from "@portabletext/react";
 import { VisualEditing } from "next-sanity/visual-editing";
@@ -11,6 +11,7 @@ import { Toaster } from "sonner";
 import DraftModeToast from "@/app/components/DraftModeToast";
 import Footer from "@/app/components/Footer";
 import Header from "@/app/components/Header";
+import ThemeProvider from "@/app/components/ThemeProvider";
 import * as demo from "@/sanity/lib/demo";
 import { sanityFetch, SanityLive } from "@/sanity/lib/live";
 import { settingsQuery } from "@/sanity/lib/queries";
@@ -52,8 +53,14 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-const inter = Inter({
-  variable: "--font-inter",
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
   subsets: ["latin"],
   display: "swap",
 });
@@ -66,23 +73,34 @@ export default async function RootLayout({
   const { isEnabled: isDraftMode } = await draftMode();
 
   return (
-    <html lang="en" className={`${inter.variable} bg-white text-black`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable}`}
+    >
       <body>
-        {/* The <Toaster> component is responsible for rendering toast notifications used in /app/client-utils.ts and /app/components/DraftModeToast.tsx */}
-        <Toaster />
-        {isDraftMode && (
-          <>
-            <DraftModeToast />
-            {/*  Enable Visual Editing, only to be rendered when Draft Mode is enabled */}
-            <VisualEditing />
-          </>
-        )}
-        {/* The <SanityLive> component is responsible for making all sanityFetch calls in your application live, so should always be rendered. */}
-        <SanityLive onError={handleError} />
-        <Header />
-        <main className="pt-20">{children}</main>
-        <Footer />
-        <SpeedInsights />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {/* The <Toaster> component is responsible for rendering toast notifications used in /app/client-utils.ts and /app/components/DraftModeToast.tsx */}
+          <Toaster />
+          {isDraftMode && (
+            <>
+              <DraftModeToast />
+              {/*  Enable Visual Editing, only to be rendered when Draft Mode is enabled */}
+              <VisualEditing />
+            </>
+          )}
+          {/* The <SanityLive> component is responsible for making all sanityFetch calls in your application live, so should always be rendered. */}
+          <SanityLive onError={handleError} />
+          <Header />
+          <main className="pt-20">{children}</main>
+          <Footer />
+          <SpeedInsights />
+        </ThemeProvider>
       </body>
     </html>
   );
